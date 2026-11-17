@@ -1,0 +1,731 @@
+<title>Fournil Notebook</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@400;500;600&family=Caveat:wght@500;700&display=swap">
+<style>
+/* Layout: a squared French notebook (cahier à petits carreaux). Red pen for titles, blue ballpoint for actions, yellow highlighter for the facts to memorise. */
+:root{
+  --paper:#fbfcfe; --grid:rgba(60,100,180,.12); --margin:rgba(214,60,70,.35);
+  --ink:#1d2a4a; --ink-soft:#56627f; --red:#c2303a; --blue:#2b55c9;
+  --card:#ffffff; --line:#d9dfeb; --ok:#23804e; --okbg:rgba(35,128,78,.1); --bad:#b83131; --badbg:rgba(184,49,49,.1);
+  --hi:rgba(255,222,70,.6); --chip:#eef2fb;
+  --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-hand:"Caveat","Comic Sans MS",cursive;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#111626; --grid:rgba(140,170,235,.07); --margin:rgba(255,110,115,.3);
+  --ink:#e5e9f4; --ink-soft:#a1abc4; --red:#ff7277; --blue:#8eaaff;
+  --card:#192034; --line:#2b3552; --ok:#5ccb8e; --okbg:rgba(92,203,142,.13); --bad:#ff8080; --badbg:rgba(255,128,128,.12);
+  --hi:rgba(255,210,60,.3); --chip:#222b44; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#111626; --grid:rgba(140,170,235,.07); --margin:rgba(255,110,115,.3);
+  --ink:#e5e9f4; --ink-soft:#a1abc4; --red:#ff7277; --blue:#8eaaff;
+  --card:#192034; --line:#2b3552; --ok:#5ccb8e; --okbg:rgba(92,203,142,.13); --bad:#ff8080; --badbg:rgba(255,128,128,.12);
+  --hi:rgba(255,210,60,.3); --chip:#222b44; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.6 var(--f-body);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:22px 22px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--paper)}
+.wrap{max-width:960px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:clamp(30px,6vw,46px);font-weight:800;color:var(--red);letter-spacing:-.01em}
+h2{font-size:26px;font-weight:700;color:var(--red)}
+h3{font-size:18px;font-weight:700}
+p{margin:0}
+a{color:var(--blue)}
+mark{background:linear-gradient(transparent 35%,var(--hi) 35%);color:inherit;padding:0 2px}
+.hand{font-family:var(--f-hand);font-size:22px;line-height:1.2;color:var(--blue)}
+.muted{color:var(--ink-soft)}
+.label{font-size:11.5px;text-transform:uppercase;letter-spacing:.09em;font-weight:600;color:var(--ink-soft)}
+
+/* top bar */
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border-bottom:2px solid var(--margin)}
+.topin{max-width:960px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.brand{font-family:var(--f-display);font-weight:800;font-size:18px;color:var(--red);text-decoration:none;margin-right:auto}
+nav.tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;width:100%}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs a{flex:none;text-decoration:none;color:var(--ink-soft);font-weight:600;font-size:14px;padding:6px 11px;border-radius:7px}
+nav.tabs a[aria-current="page"]{color:var(--ink);background:var(--hi)}
+nav.tabs a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.prog{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.bar{width:110px;height:8px;border-radius:4px;background:var(--chip);overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--ok);width:0;transition:width .4s}
+
+section.view{padding-top:28px;display:grid;gap:22px}
+.intro{display:grid;gap:10px;max-width:68ch}
+
+/* cards & lists */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:8px;align-content:start;min-width:0}
+a.card{text-decoration:none;color:inherit;transition:border-color .15s,transform .15s}
+a.card:hover{border-color:var(--blue);transform:translateY(-1px)}
+.cardtop{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12px;font-weight:600;padding:2px 8px;border-radius:20px;background:var(--chip);color:var(--ink-soft);white-space:nowrap}
+.chip.v{color:var(--red)}
+.tick{flex:none;width:22px;height:22px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-size:13px;color:transparent}
+.tick.on{background:var(--ok);border-color:var(--ok);color:#fff}
+.diff{letter-spacing:2px;color:var(--red);font-size:13px}
+
+.filters{display:flex;flex-wrap:wrap;gap:6px}
+.filters button,.btn{font:600 14px var(--f-body);border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:7px 13px;cursor:pointer}
+.filters button[aria-pressed="true"]{border-color:var(--blue);color:var(--blue);background:var(--chip)}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:var(--paper)}
+.btn.good{border-color:var(--ok);color:var(--ok)}
+.btn:hover{border-color:var(--blue)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+
+/* detail pages */
+.detail{display:grid;gap:22px}
+.back{font-weight:600;text-decoration:none}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:22px}
+@media (max-width:720px){.two{grid-template-columns:minmax(0,1fr)}}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+td,th{padding:7px 8px;border-bottom:1px dashed var(--line);text-align:left;vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-soft)}
+td.q{text-align:right;white-space:nowrap;font-weight:600}
+.tablewrap{overflow-x:auto}
+ol.steps{margin:0;padding:0;list-style:none;counter-reset:s;display:grid;gap:12px}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:30px minmax(0,1fr);gap:10px}
+ol.steps li::before{content:counter(s);font-family:var(--f-hand);font-size:24px;line-height:1;color:var(--red);text-align:center;padding-top:2px}
+ul.clean{margin:0;padding-left:18px;display:grid;gap:6px}
+.note{border-left:3px solid var(--red);padding:10px 14px;background:var(--card);border-radius:0 8px 8px 0}
+.note.tip{border-color:var(--blue)}
+.temps{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.temp{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.temp b{display:block;font-family:var(--f-display);font-size:20px;color:var(--ink)}
+.ask{display:grid;gap:10px}
+.ask details{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 14px}
+.ask summary{cursor:pointer;font-weight:600}
+.ask details p{margin-top:8px}
+.prose{display:grid;gap:14px;max-width:72ch}
+.prose h3{margin-top:10px}
+
+/* timeline of fermentation steps */
+.timeline{display:grid;gap:0;border-left:2px dashed var(--margin);margin-left:12px}
+.tl{position:relative;padding:0 0 18px 24px}
+.tl::before{content:"";position:absolute;left:-8px;top:5px;width:14px;height:14px;border-radius:50%;background:var(--paper);border:2px solid var(--red)}
+.tl h3 small{font-family:var(--f-body);font-weight:500;font-size:13px;color:var(--ink-soft);margin-left:6px}
+
+/* flashcards */
+.flash{perspective:1200px;max-width:560px;width:100%;margin:0 auto}
+.fc{position:relative;height:260px;cursor:pointer;transform-style:preserve-3d;transition:transform .5s}
+.fc.flip{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px;display:grid;place-items:center;text-align:center;overflow:auto}
+.face.back{transform:rotateY(180deg);border-color:var(--blue)}
+.face .big{font-family:var(--f-display);font-size:26px;font-weight:700}
+@media (prefers-reduced-motion:reduce){.fc{transition:none}a.card{transition:none}}
+
+/* quiz */
+.qopts{display:grid;gap:8px}
+.qopts button{text-align:left;font:500 15px var(--f-body);padding:11px 14px;border-radius:8px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.qopts button.right{border-color:var(--ok);background:var(--okbg)}
+.qopts button.wrong{border-color:var(--bad);background:var(--badbg)}
+.qopts button:disabled{cursor:default}
+
+/* tools */
+.form{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.form label{display:grid;gap:4px;font-size:13px;font-weight:600;color:var(--ink-soft)}
+.form input,.form select{font:500 16px var(--f-body);padding:8px 10px;border-radius:7px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);width:100%}
+.result{font-family:var(--f-display);font-size:30px;font-weight:800;color:var(--blue)}
+
+.check{display:grid;gap:8px}
+.check label{display:flex;gap:10px;align-items:flex-start;cursor:pointer}
+.check input{margin-top:5px;width:17px;height:17px;accent-color:var(--ok);flex:none}
+.foot{margin-top:40px;font-size:13px;color:var(--ink-soft)}
+</style>
+
+<header class="top"><div class="topin">
+  <a class="brand" href="#home">Fournil Notebook</a>
+  <div class="prog"><span id="progtxt">0 / 0 studied</span><div class="bar"><i id="progbar"></i></div></div>
+  <nav class="tabs" aria-label="Sections">
+    <a href="#home">Start</a><a href="#basics">Fundamentals</a><a href="#recipes">Recipes</a><a href="#cards">Flashcards</a><a href="#quiz">Quiz</a><a href="#tools">Calculators</a><a href="#glossary">Glossary</a><a href="#trial">Trial day</a>
+  </nav>
+</div></header>
+<main class="wrap" id="app"></main>
+
+<script>
+/* ============ CONTENT ============ */
+
+const MODULES = [
+{id:"m-steps",title:"The steps of fermentation",sub:"From weighing to cooling: what happens at every stage",min:15,html:`
+<p>Every yeasted product follows the same skeleton. Learn this order by heart; the chef will use these French words.</p>
+<div class="timeline">
+<div class="tl"><h3>1. Pesée <small>scaling</small></h3><p>Weigh everything, including water and eggs. Professionals never use cups. Check the recipe twice.</p></div>
+<div class="tl"><h3>2. Autolyse <small>optional, 20 min – 1 h</small></h3><p>Mix only flour and water, then rest. Gluten starts forming by itself, so the dough becomes smoother with less kneading. Salt and yeast (or levain) go in after. Used for baguettes, ciabatta, sourdough.</p></div>
+<div class="tl"><h3>3. Pétrissage <small>mixing / kneading</small></h3><p><b>Frasage</b> = slow speed until everything is combined (about 4–5 min). Then faster speed to build gluten. Check with the <mark>window-pane test</mark> (le voile): stretch a piece thin; if light passes without tearing, the gluten is developed. Measure the dough temperature at the end. Target for most bread: <mark>24–26 °C</mark>.</p></div>
+<div class="tl"><h3>4. Pointage <small>bulk fermentation, first rise</small></h3><p>The whole dough ferments in one mass. This is where <b>flavour and strength</b> develop. During pointage you can do <b>rabats</b> (folds) every 30–45 min to strengthen the dough. Can be done cold overnight (pointage en bac au froid, 4–6 °C) for more taste.</p></div>
+<div class="tl"><h3>5. Division <small>dividing</small></h3><p>Cut pieces (pâtons) to an exact weight with a scraper (coupe-pâte). Cut cleanly; don't tear.</p></div>
+<div class="tl"><h3>6. Préfaçonnage <small>pre-shaping</small></h3><p>Shape loosely into a ball or a short cylinder. Gives the dough an even shape before the final shaping.</p></div>
+<div class="tl"><h3>7. Détente <small>bench rest, 15–30 min</small></h3><p>The gluten relaxes so the dough can be shaped without tearing. Cover it so it doesn't dry (croûter).</p></div>
+<div class="tl"><h3>8. Façonnage <small>shaping</small></h3><p>Final shape: baguette, boule, bâtard, roll… Build surface tension without tearing the skin.</p></div>
+<div class="tl"><h3>9. Apprêt <small>final proof</small></h3><p>Second rise after shaping, on a couche (linen), in a banneton or on trays. Bread: 24–27 °C. Viennoiserie: <mark>never above 27–28 °C</mark> or the butter melts. Can be slowed in a proofer-retarder (pousse contrôlée / chambre de fermentation). Test: press lightly with a floured finger; it should spring back slowly.</p></div>
+<div class="tl"><h3>10. Grignage / Dorure <small>scoring / egg wash</small></h3><p>Bread is scored with a lame so it opens where you want (the grigne). Viennoiserie gets egg wash (dorure) instead, brushed gently so the layers don't stick.</p></div>
+<div class="tl"><h3>11. Cuisson <small>baking</small></h3><p>Bread: hot deck oven with steam (buée). Viennoiserie: convection oven, lower temperature. See the oven module.</p></div>
+<div class="tl"><h3>12. Ressuage <small>cooling</small></h3><p>Steam leaves the loaf and the crumb sets. Cutting hot bread makes it gummy. Rye bread needs up to 24 h.</p></div>
+</div>
+<div class="note tip"><span class="hand">Memory trick:</span> P-A-P-P-D-P-D-F-A-G-C-R. Or just think: <b>mix → rise → cut → shape → rest → shape → rise → bake → cool</b>. Dough always rises twice: pointage (whole mass) and apprêt (shaped pieces).</div>
+`},
+{id:"m-dough",title:"The basic doughs",sub:"Lean, enriched, laminated, choux, short and puff",min:20,html:`
+<p>Almost every item on the list is built from one of these families. If you know which family a product belongs to, you already know half of the recipe.</p>
+<h3>1. Pâte à pain (lean dough)</h3>
+<p>Flour, water, salt, yeast or levain. Nothing else. Baguette, ciabatta, tourte de seigle, bagels.</p>
+<p class="muted">Typical ratios: salt 1.8–2 %, fresh yeast 0.5–2 %, water 60–80 % of the flour weight.</p>
+<h3>2. Pâte enrichie / pâte levée sucrée (enriched dough)</h3>
+<p>Bread dough plus sugar, butter, eggs and/or milk. Softer and slower to ferment, because sugar and fat slow the yeast. Brioche, cinnamon rolls, hot cross buns, Berliner, and at the extreme end panettone and colomba.</p>
+<p class="muted">Trick: add the butter at the end, once the gluten is formed, and keep the dough cool (it gets sticky above 26 °C).</p>
+<h3>3. Pâte levée feuilletée (laminated yeast dough)</h3>
+<p>Croissant, pain au chocolat, suisse, cube. Made of two parts:</p>
+<ul class="clean"><li><b>Détrempe</b>: the dough (flour, water/milk, sugar, salt, yeast, a little butter).</li><li><b>Beurrage</b>: a flat sheet of butter locked inside the détrempe.</li><li><b>Tourage</b>: rolling and folding to create layers. A <mark>tour simple</mark> folds the dough in 3 (letter fold). A <mark>tour double</mark> (tour portefeuille) folds it in 4 (book fold).</li></ul>
+<p>Classic croissant: 1 double + 1 simple turn = 4 × 3 = 12 butter layers. Or 3 simple turns = 27. More turns = finer, less defined honeycomb.</p>
+<p>Butter and dough must have the <b>same firmness</b>. Butter around 10–14 °C: cold but bendable, not brittle. Rest the dough in the fridge 20–30 min between turns.</p>
+<h3>4. Pâte feuilletée (puff pastry, no yeast)</h3>
+<p>Same idea but without yeast, and usually 6 simple turns (729 layers). The rise comes only from steam between the layers. Chausson aux pommes, galette des rois. <b>Feuilletage inversé</b> (butter outside, dough inside) is more regular and more tender.</p>
+<h3>5. Pâte à choux</h3>
+<p>Water/milk + butter brought to the boil, flour added at once to make a <b>panade</b>, dried on the heat, then eggs added little by little. It puffs because the water turns into steam in the oven. Choux, éclairs, Paris-Brest.</p>
+<h3>6. Pâtes friables (short pastries)</h3>
+<ul class="clean"><li><b>Brisée</b>: savoury or neutral, used for quiches and often for flan parisien.</li><li><b>Sucrée</b>: with sugar and eggs, crisp, for tart shells.</li><li><b>Sablée</b>: most butter, most crumbly, like a biscuit.</li></ul>
+<h3>7. Crèmes de base</h3>
+<ul class="clean"><li><b>Crème pâtissière</b>: milk, yolks, sugar, starch, cooked until it boils for 1–2 min. Filling of the suisse, base of many creams. Cool it fast, covered with film touching the surface.</li><li><b>Crème d'amande</b>: butter, sugar, eggs, almond powder (equal weights).</li><li><b>Frangipane</b>: crème d'amande + crème pâtissière.</li><li><b>Crème diplomate</b>: crème pât + whipped cream (+ gelatine).</li><li><b>Craquelin</b>: butter, brown sugar, flour in equal parts, rolled 2 mm thin, put on top of choux.</li></ul>
+`},
+{id:"m-levain",title:"Levain and lievito madre",sub:"How to make and keep a mother dough",min:15,html:`
+<p>A levain (sourdough starter) is flour and water colonised by wild yeasts and lactic bacteria. It gives taste, keeps the bread fresh longer and is the only leavening in panettone and colomba.</p>
+<h3>The types</h3>
+<div class="tablewrap"><table><tr><th>Name</th><th>Hydration</th><th>Used for</th></tr>
+<tr><td>Levain liquide</td><td>100–125 %</td><td>Bread, baguettes. Milder, more lactic (yogurt-like) taste.</td></tr>
+<tr><td>Levain dur (stiff)</td><td>50–60 %</td><td>Bread, more acetic (sour) taste, more strength.</td></tr>
+<tr><td><b>Lievito madre</b></td><td>about 45–50 %</td><td>Panettone, colomba, pandoro. Stiff, sweet-smelling, kept at low acidity.</td></tr>
+<tr><td>Levain de seigle</td><td>80–100 %</td><td>Rye bread. Rye needs acidity to bake properly.</td></tr>
+</table></div>
+<h3>Making one from zero (7–10 days)</h3>
+<ol class="steps">
+<li><div><b>Day 1</b>: 50 g whole wheat or rye flour + 50 g water at 26–28 °C. Cover, leave warm (25–28 °C).</div></li>
+<li><div><b>Day 2</b>: Probably few bubbles. Add 50 g flour + 50 g water, mix.</div></li>
+<li><div><b>Day 3 to 7</b>: Each day keep 50 g, add 50 g flour + 50 g water. It may rise a lot on day 2–3 and then go quiet: this is normal (the wrong bacteria die off).</div></li>
+<li><div><b>Ready</b> when it doubles reliably 4–8 h after each feeding and smells pleasantly sour, like yogurt or apple. Then switch to white flour if you want.</div></li>
+</ol>
+<h3>Lievito madre (Italian mother dough)</h3>
+<ul class="clean">
+<li>Made from a liquid or stiff levain that is converted: refresh with <b>1 part madre : 1 part strong flour (W 300–380) : 0.42–0.45 part water</b>, knead into a smooth ball.</li>
+<li>It must <mark>triple in volume in about 3.5–4 h at 26–28 °C</mark>. If it is slower, it's not strong enough for panettone yet.</li>
+<li><b>Rinfresco</b> = refresh. Before panettone you do 2–3 refreshes in a row, every 3.5–4 h, to make it strong and less acidic.</li>
+<li><b>Bagnetto</b>: if it smells too sour, slice it and soak 15–20 min in water at 18 °C with a pinch of sugar, then refresh.</li>
+<li>Storage: <b>legato</b> (tied tightly in a cloth with string, so it ferments under pressure) or <b>in acqua</b> (submerged in water). Kept at about 18 °C between uses, or fridge for longer pauses.</li>
+<li>Signs it's good: domed, honeycomb inside, sweet-milky smell, mildly acidic taste (pH around 4.1). Bad signs: strong vinegar or acetone smell, grey liquid, collapses.</li>
+</ul>
+<div class="note tip"><span class="hand">Say it right:</span> lievito madre (li-É-vito MA-dre) = pasta madre. In French: levain naturel, or "le chef" for the piece you keep back.</div>
+`},
+{id:"m-oven",title:"Ovens, ventilation and temperatures",sub:"Deck vs convection, steam, and which temperature for what",min:15,html:`
+<h3>The two ovens you will see</h3>
+<div class="tablewrap"><table><tr><th></th><th>Four à sole (deck oven)</th><th>Four ventilé / rotatif (convection)</th></tr>
+<tr><td>How it heats</td><td>Hot stone floor + radiant heat. Strong heat from below.</td><td>A fan blows hot air around. Even, fast colouring.</td></tr>
+<tr><td>Best for</td><td><b>Bread</b>: baguettes, boules, ciabatta, rye, bagels</td><td><b>Viennoiserie</b> and pastry: croissants, choux, cinnamon rolls</td></tr>
+<tr><td>Steam (buée)</td><td>Yes, injected just before or right after loading</td><td>Possible on some models; little or none for viennoiserie</td></tr>
+<tr><td>Temperatures</td><td>230–260 °C</td><td>155–190 °C (about <mark>20 °C lower than a static oven</mark>)</td></tr>
+</table></div>
+<p><b>Ventilation</b> in a bakery means the fan (ventilateur) of the convection oven. Fan = faster, more even colour, but it dries the surface. That is why viennoiserie is baked lower and why you open the vent (exura / oura) at the end of bread baking to let the steam out for a crisp crust.</p>
+<h3>Why steam for bread</h3>
+<ul class="clean"><li>Keeps the surface soft at the start, so the loaf can expand fully (oven spring) and the grigne opens.</li><li>Steam condenses on the dough and gelatinises the starch: shiny, thin, crackly crust.</li><li>In the last 5–10 min, open the vent (or the door) to dry the crust.</li></ul>
+<h3>Temperature cheat-sheet</h3>
+<div class="tablewrap"><table><tr><th>What</th><th>Temperature</th></tr>
+<tr><td>Dough temperature after mixing, bread</td><td class="q">24–26 °C</td></tr>
+<tr><td>Dough temperature, croissant détrempe</td><td class="q">20–24 °C</td></tr>
+<tr><td>Dough temperature, panettone</td><td class="q">26–28 °C</td></tr>
+<tr><td>Butter for tourage</td><td class="q">10–14 °C</td></tr>
+<tr><td>Proof bread</td><td class="q">24–27 °C, 75–80 % humidity</td></tr>
+<tr><td>Proof viennoiserie</td><td class="q">max 26–28 °C</td></tr>
+<tr><td>Proof panettone / colomba</td><td class="q">28–30 °C</td></tr>
+<tr><td>Retard / fridge</td><td class="q">2–6 °C</td></tr>
+<tr><td>Baguette (deck, steam)</td><td class="q">240–250 °C, 20–25 min</td></tr>
+<tr><td>Croissant (convection)</td><td class="q">165–175 °C, 15–20 min</td></tr>
+<tr><td>Choux (convection)</td><td class="q">160–170 °C, 30–40 min</td></tr>
+<tr><td>Panettone core temperature when done</td><td class="q">92–94 °C</td></tr>
+<tr><td>Bread core temperature when done</td><td class="q">96–98 °C</td></tr>
+<tr><td>Frying Berliner</td><td class="q">170–175 °C</td></tr>
+<tr><td>Crème pâtissière: cook until</td><td class="q">boils 1–2 min, then cool fast below 10 °C</td></tr>
+</table></div>
+<h3>Water temperature (température de base)</h3>
+<p>Bakers control dough temperature with the water. French method: they pick a <b>base temperature</b> (for example 54–60 for a spiral mixer) and calculate <mark>water = base − (flour temperature + room temperature)</mark>, minus the levain temperature if there is a preferment. Ask which base the bakery uses. The Calculators tab does this for you.</p>
+`},
+{id:"m-flour",title:"Flour, yeast, salt and baker's percentages",sub:"Reading a recipe like a professional",min:10,html:`
+<h3>French flour types (T = type)</h3>
+<p>The number is the ash (mineral) content. Higher number = more of the whole grain, darker, more taste, less rise.</p>
+<div class="tablewrap"><table><tr><th>Type</th><th>Use</th><th>Italian / Dutch equivalent</th></tr>
+<tr><td>T45</td><td>Pastry, viennoiserie, brioche</td><td>00 / patentbloem</td></tr>
+<tr><td>T55</td><td>Bread, viennoiserie</td><td>0 / tarwebloem</td></tr>
+<tr><td>T65</td><td>Baguette de tradition, levain breads</td><td>1</td></tr>
+<tr><td>T80</td><td>Pain bis, semi-wholemeal</td><td>2</td></tr>
+<tr><td>T110 / T150</td><td>Wholemeal (complète / intégrale)</td><td>integrale / volkoren</td></tr>
+<tr><td>Seigle T85–T170</td><td>Rye</td><td>segale / rogge</td></tr>
+</table></div>
+<p><b>W</b> (Italian strength index): the higher, the stronger the gluten. Pizza W 250–280, ciabatta W 280–320, <mark>panettone W 350–400</mark>.</p>
+<h3>Baker's percentages</h3>
+<p>Everything is written as a percentage of the <b>total flour = 100 %</b>. So "hydration 70 %" with 1000 g flour means 700 g water. This makes any recipe easy to scale.</p>
+<div class="tablewrap"><table><tr><th>Ingredient</th><th>Usual %</th></tr>
+<tr><td>Salt</td><td class="q">1.8–2.2 %</td></tr>
+<tr><td>Fresh yeast, direct bread</td><td class="q">1–2 %</td></tr>
+<tr><td>Fresh yeast, overnight dough</td><td class="q">0.1–0.5 %</td></tr>
+<tr><td>Fresh yeast, viennoiserie / brioche</td><td class="q">3–5 %</td></tr>
+<tr><td>Levain in bread</td><td class="q">15–30 %</td></tr>
+<tr><td>Water, baguette</td><td class="q">65–75 %</td></tr>
+<tr><td>Water, ciabatta</td><td class="q">75–85 %</td></tr>
+</table></div>
+<h3>Yeast</h3>
+<ul class="clean"><li>Fresh yeast (levure fraîche, gist) : dry instant yeast = <b>3 : 1</b>. 10 g fresh = about 3.3 g instant.</li><li>Yeast dies around 55–60 °C. Very cold water slows it a lot.</li><li><b>Salt slows yeast</b>. Don't put them directly in contact for long; add them at different moments or on opposite sides of the bowl.</li><li>Sugar above about 10 % slows yeast too (osmosis). That's why brioche needs more yeast, or osmotolerant yeast.</li></ul>
+<h3>Preferments</h3>
+<ul class="clean"><li><b>Poolish</b> (Polish origin): equal weights flour and water + a little yeast, 12–16 h. Liquid, gives extensibility and a nutty taste. Classic for baguettes.</li><li><b>Biga</b> (Italian): stiff, 45–55 % water, about 1 % yeast, 16–24 h at 16–18 °C. Strength and taste. Classic for ciabatta.</li><li><b>Pâte fermentée</b>: a piece of yesterday's dough added to today's.</li></ul>
+`},
+{id:"m-tricks",title:"Little tricks in general",sub:"The things experienced bakers do without thinking",min:10,html:`
+<ul class="clean">
+<li><b>Weigh water and eggs too.</b> One egg without shell is about 50 g, a yolk 20 g, a white 30 g.</li>
+<li><b>Keep back some water</b> (bassinage) and add it at the end of mixing once the gluten is formed. Easier to reach high hydration.</li>
+<li><b>Use the thermometer</b> constantly: dough after mixing, butter for tourage, proofing room, core of baked goods.</li>
+<li><b>Flour the bench lightly</b> (fleurer). Too much flour makes dough slide when shaping and leaves raw flour in the bread.</li>
+<li><b>Wet hands</b> for sticky, high-hydration dough; <b>floured hands</b> for shaping.</li>
+<li><b>The poke test</b>: underproofed springs back fast, ready springs back slowly and leaves a small mark, overproofed stays dented or collapses.</li>
+<li><b>Croissant tip</b>: if butter cracks while rolling, it's too cold; if it shows through or gets greasy, it's too warm. Wait, don't fight it.</li>
+<li><b>Roll the lamination in one direction</b> and turn the dough 90° between turns. Brush off excess flour before folding.</li>
+<li><b>Egg wash twice</b> on viennoiserie (once before proof, once before baking), always brushing in one direction, never on the cut edges (they would glue shut).</li>
+<li><b>Score with confidence</b>: one fast, decisive cut. Hesitant cuts tear. Blade almost flat (30–45°) on baguettes for an ear.</li>
+<li><b>Cool crème pâtissière fast</b> in a flat tray with film touching the surface. Whisk it smooth before use.</li>
+<li><b>Choux</b>: never open the oven before they're coloured, or they collapse.</li>
+<li><b>Cover dough</b> always (film, cloth, lid) so it doesn't form a skin.</li>
+<li><b>Clean as you go</b> (nettoyer au fur et à mesure). Chefs notice this more than anything.</li>
+<li><b>Write it down</b>: weights, times, temperatures of each batch. A small notebook in your apron pocket is perfect for a trial day.</li>
+<li><b>Rotate trays</b> halfway through baking in ovens that colour unevenly.</li>
+<li><b>Proof viennoiserie with a tray of hot water</b> in a closed oven (off) if there is no proofer, to get humidity.</li>
+<li><b>Frozen viennoiserie</b>: bakeries often shape, freeze, then proof overnight in a programmable proofer. Ask about their process.</li>
+</ul>
+`}
+];
+
+const RECIPES = [
+{id:"baguette",name:"Baguette",fr:"Baguette de tradition",fam:"Bread",diff:2,time:"About 4–5 h, or overnight",
+what:"The French reference loaf. Thin crackly crust, open creamy crumb, 5–7 scores. The 'tradition' by French law has only flour, water, salt and yeast/levain, no additives.",
+ing:[["Flour T65","1000 g"],["Water (hydration 68–72 %)","700 g"],["Salt (1.8 %)","18 g"],["Fresh yeast","3–5 g (or 200 g levain liquide)"],["Optional poolish","see Fundamentals"]],
+steps:["Autolyse: flour + 650 g water, mix and rest 30–60 min.","Add salt, yeast (and levain). Mix slow 5 min, then medium until smooth. Add the last water little by little (bassinage). Dough at 24–25 °C.","Pointage 1–2 h at room temperature with 2–3 folds, or 1 h then 12–18 h in the fridge for more taste.","Divide into 350 g pieces (they give about 250 g baked baguettes). Pre-shape into loose cylinders.","Détente 20–30 min, covered.","Shape: flatten, fold the top third down, seal, fold again, seal with the heel of the hand, roll out from the centre to 55–60 cm with tapered ends.","Apprêt on a floured couche, seam up, 45–60 min (or less if the dough was cold).","Score 5–7 grignes: almost parallel to the length, each overlapping the previous by about a third, blade at a low angle.","Bake 240–250 °C with steam, 20–25 min. Open the vent for the last 5 min."],
+temps:[["Dough after mixing","24–25 °C"],["Oven","240–250 °C + steam"],["Bake time","20–25 min"],["Weight","350 g raw → 250 g"]],
+tricks:["Score just after taking off the couche, while the surface is slightly dry; a wet surface drags the blade.","The 'song' of the crust crackling as it cools is a sign of a good bake.","Flip the baguette onto the transfer board (planchette) with one confident move."],
+mistakes:["Scores perpendicular to the loaf: makes a 'sausage' look, the grignes don't open.","Shaping too tight: tears the skin; too loose: flat baguette.","Underbaked: pale crust that goes soft within an hour."],
+ask:[["How many grignes on a baguette?","Classic is 5 to 7 (often 5 or 7, odd number). They overlap by about one third."],["Why T65 for tradition?","More flavour and colour than T55, and it's the traditional choice for levain and tradition baguettes."]]},
+
+{id:"ciabatta",name:"Ciabatta",fr:"Ciabatta (Italian 'slipper')",fam:"Bread",diff:2,time:"Biga the day before + about 4 h",
+what:"Italian flat, rustic loaf with very high hydration and big irregular holes. Made with biga and almost no shaping.",
+ing:[["Biga: strong flour","500 g"],["Biga: water","250 g"],["Biga: fresh yeast","5 g"],["Final dough: flour","500 g"],["Final dough: water","about 520 g (total hydration about 78–80 %)"],["Salt","22 g"],["Fresh yeast","5 g"],["Olive oil (optional)","20 g"]],
+steps:["Biga: mix flour, water and yeast just until shaggy (don't knead). 16–18 h at 16–18 °C.","Mix biga with flour and most of the water, then yeast, then salt. Add the rest of the water slowly (bassinage) until the dough is glossy and stretchy.","Pointage 1.5–2 h in an oiled tub with coil folds every 30 min.","Turn onto a heavily floured bench. Do not deflate. Cut into rectangles with a scraper.","Flip each piece onto a floured couche or board. Proof 30–45 min.","Flip again onto the peel (the floury side up) and bake 240–250 °C with steam, 25–30 min."],
+temps:[["Biga","16–18 °C, 16–18 h"],["Oven","240–250 °C + steam"],["Hydration","75–85 %"]],
+tricks:["Wet your hands and the scraper, never flour the inside of the dough.","Handle it like something fragile: the holes are made during pointage, shaping only keeps them.","Flour with semolina or rice flour; it doesn't absorb into the dough."],
+mistakes:["Adding all the water at once: soup that never builds gluten.","Pressing out the gas when cutting."],
+ask:[["What's a biga?","Italian stiff preferment: about 50 % water and 1 % yeast, fermented 16–24 h cool. Gives strength and taste."]]},
+
+{id:"tourte-seigle",name:"Tourte de seigle",fr:"Rye sourdough loaf (Auvergne style)",fam:"Bread",diff:2,time:"Levain + about 4 h + 24 h rest",
+what:"Big round loaf with mostly or 100 % rye, made with rye levain. Dense but moist, cracked floury surface, long keeping. Rye behaves very differently from wheat.",
+ing:[["Rye flour T130/T170","1000 g (or 90 % rye + 10 % wheat)"],["Water at 40–50 °C","800–850 g"],["Rye levain (ripe)","300–400 g"],["Salt","20 g"]],
+steps:["Mix everything just until homogeneous, 5–8 min slow. Rye has no real gluten to develop, so do not knead long.","Dough temperature high: 28–30 °C. Short pointage: 20–30 min.","Divide (often 1–2 kg). Shape round with wet hands, roll in rye flour and place in a floured banneton, or just on a floured cloth.","Apprêt 45–75 min until the surface cracks.","Bake 250–260 °C with little or no steam for 10 min, then lower to 200–210 °C. 1 h or more for a 1.5 kg tourte.","Rest at least 12, ideally 24 h before slicing."],
+temps:[["Dough","28–30 °C"],["Oven","250 °C then 200–210 °C"],["Rest before slicing","12–24 h"]],
+tricks:["Acidity (from the levain) is essential: it stops rye enzymes from turning the crumb gummy.","The cracked surface (craquelé) comes from rolling in flour and proofing until it breaks.","Wet hands and a wet scraper make the sticky dough manageable."],
+mistakes:["Kneading like wheat bread: it gets stickier, not stronger.","Cutting the same day: sticky, wet crumb."],
+ask:[["Why does rye need levain?","Rye contains active enzymes (amylase) and pentosans. Acidity from the levain slows the enzymes and lets the crumb set properly."]]},
+
+{id:"bagels",name:"Sourdough bagels",fr:"Bagels au levain",fam:"Bread",diff:2,time:"Day 1 dough, overnight fridge, day 2 boil + bake",
+what:"Dense, chewy ring bread that is boiled before baking. Low hydration and a cold overnight rest are the keys.",
+ing:[["Strong flour (T65 or high protein)","1000 g"],["Water","520–560 g (52–56 %)"],["Levain (stiff or liquid, active)","200 g"],["Salt","20 g"],["Barley malt syrup or honey","20 g"],["Boiling water: malt or honey","1 tbsp per litre (+ optional baking soda)"]],
+steps:["Mix everything into a stiff, smooth dough (8–10 min). It should feel firm.","Pointage 2–3 h at 25 °C.","Divide into 100–110 g pieces. Shape: roll into a rope, wrap around your hand, overlap the ends and roll to seal. Or poke a hole in a ball and stretch.","Place on a tray with semolina, cover, and retard in the fridge 12–24 h.","Float test: a bagel dropped in water floats = ready to boil.","Boil 30–60 s on each side in water with malt.","Drain, top with seeds while wet.","Bake 220–230 °C, 18–22 min until deep golden."],
+temps:[["Boil","30–60 s per side"],["Oven","220–230 °C"],["Hydration","52–56 %"]],
+tricks:["Longer boil = thicker, chewier crust.","Malt in the water gives the shine and the typical colour.","Seal the ends well or they open during boiling."],
+mistakes:["Too wet dough: flat bagels without a hole.","Skipping the cold rest: less taste and less shine."],
+ask:[["Why boil bagels?","Boiling sets the crust before baking (starch gelatinises), giving the chewy shiny skin and limiting the rise in the oven."]]},
+
+{id:"croissant",name:"Croissant",fr:"Croissant au beurre",fam:"Viennoiserie",diff:3,time:"Day 1 détrempe, day 2 tourage + shape, proof 2 h",
+what:"The queen of viennoiserie: laminated yeast dough with dry butter. Crisp, flaky outside, honeycomb (alvéolé) inside.",
+ing:[["Flour T45 (or half T45 / half T55)","1000 g"],["Water","240 g"],["Milk","240 g"],["Sugar","120 g"],["Salt","20 g"],["Fresh yeast","40 g"],["Butter (in the détrempe)","80 g"],["Beurre de tourage (dry butter, 84 % fat)","500 g"],["Egg wash","whole eggs + pinch of salt"]],
+steps:["Détrempe: mix all except the tourage butter for 6–8 min. Dough smooth but not too developed (it will develop during folding). About 22 °C.","Flatten into a rectangle, wrap, fridge overnight (or at least 2 h).","Beat the tourage butter into a square plaque about 1 cm thick, chill until 10–14 °C.","Beurrage: roll the dough twice the size of the butter, lock the butter inside, seal the edges.","Tourage: roll to 3x the length, fold in 4 (tour double). Rest 20–30 min in the fridge. Roll again, fold in 3 (tour simple). Rest 30 min.","Abaisse (roll out) to 3.5–4 mm. Rest a few minutes so it doesn't shrink.","Cut triangles about 8–9 cm base × 25 cm high (60–70 g). Small notch in the base, roll up without pressing, tip underneath.","Egg wash. Proof at 25–26 °C, 75–80 % humidity, about 2 h until they wobble like jelly and layers are visible.","Egg wash again, gently. Bake convection 165–175 °C for 15–20 min until deep golden."],
+temps:[["Détrempe","20–24 °C"],["Butter","10–14 °C"],["Proof","max 26–27 °C"],["Oven (fan)","165–175 °C"]],
+tricks:["Hold the triangle by the tip and stretch it slightly before rolling: more turns, nicer shape.","A well-proofed croissant 'jiggles' when you shake the tray.","Look at the cross-section: you want an even honeycomb, not a dense band of bread in the middle."],
+mistakes:["Proofing too warm: butter leaks, croissants come out flat and greasy.","Underproofed: dense centre, butter leaks in the oven, layers squashed.","Egg wash on the cut edges: glues the layers."],
+ask:[["How many layers with 1 double + 1 simple?","12 layers of butter (4 × 3). With 3 simple turns: 27."],["What is beurre de tourage?","A dry butter (about 84 % fat, less water) that stays plastic when cold, so it can be rolled thin without breaking or melting."]]},
+
+{id:"pain-choc",name:"Pain au chocolat",fr:"Pain au chocolat (chocolatine)",fam:"Viennoiserie",diff:3,time:"Same as croissant",
+what:"Same laminated dough as the croissant, rolled around two chocolate sticks (bâtons boulangers).",
+ing:[["Croissant dough (laminated)","1 batch"],["Chocolate sticks (bâtons)","2 per piece, about 5 g each"],["Egg wash","as croissant"]],
+steps:["Roll the laminated dough to 3.5–4 mm.","Cut rectangles about 8 × 15 cm (65–70 g).","Place one stick at the edge, fold over once, place the second stick, roll up. Finish with the seam underneath.","Egg wash, proof at 25–26 °C about 2 h.","Egg wash again, bake 165–175 °C fan, 15–18 min."],
+temps:[["Proof","max 26–27 °C"],["Oven (fan)","165–175 °C"]],
+tricks:["The seam must be exactly underneath or it opens in the oven.","Same size for every piece: use a template or ruler. Chefs check regularity."],
+mistakes:["Sticks pushed too close to the ends: chocolate burns.","Rolled too tight: no room for the layers to develop."],
+ask:[["Chocolatine or pain au chocolat?","Same thing; 'chocolatine' is used in the south-west of France. Good joke to know at a French bakery."]]},
+
+{id:"suisse",name:"La galette suisse",fr:"Suisse / pain suisse",fam:"Viennoiserie",diff:2,time:"Laminated dough + crème pât",
+what:"A long rectangular viennoiserie filled with crème pâtissière and chocolate chips, folded in two. Made with croissant dough or brioche dough depending on the bakery. 'Galette' suggests a flatter or round version. Ask on the day which dough and shape they use.",
+ing:[["Croissant dough or brioche dough","1 batch"],["Crème pâtissière (thick)","about 25–30 g per piece"],["Chocolate chips (pépites)","10–15 g per piece"],["Egg wash","as croissant"]],
+steps:["Roll the dough to 3.5–4 mm.","Cut long strips, about 10 × 22 cm.","Pipe a line of crème pât on one half, sprinkle chocolate chips.","Fold the other half over and press the edges lightly. Optional: a few cuts on top.","Egg wash, proof at 25–26 °C until puffy.","Bake 165–175 °C fan, 16–20 min."],
+temps:[["Proof","max 26–27 °C"],["Oven (fan)","165–175 °C"]],
+tricks:["Use a firmer crème pât (a bit more starch) so it doesn't run in the oven.","Leave a 1 cm border without cream so the edges seal."],
+mistakes:["Too much cream: it leaks and burns on the tray."],
+ask:[["What's the filling of a suisse?","Crème pâtissière (vanilla) and chocolate chips."]]},
+
+{id:"suisse-framboise",name:"La suisse cacao & framboise",fr:"Suisse cacao-framboise",fam:"Viennoiserie",diff:3,time:"Laminated dough + 2 fillings",
+what:"A modern variation of the suisse: often made with a two-colour (bicolore) croissant dough with a cocoa layer, filled with chocolate crème pât and raspberry (compote or insert).",
+ing:[["Croissant dough","1 batch"],["Cocoa dough for the outside layer","about 15 % of the détrempe + 4–5 % cocoa powder on its flour"],["Chocolate crème pât","crème pât + 15–20 % dark chocolate added hot"],["Raspberry compote","raspberries 200 g, sugar 40 g, pectin NH 3 g"]],
+steps:["Make the détrempe, keep a part aside and mix it with cocoa powder (+ a little water).","After the last turn, roll the cocoa dough thin and lay it on top of the laminated dough. Roll together.","Optional: cut fine lines in the cocoa layer to show stripes.","Cut like a suisse, pipe chocolate crème pât, add a line of raspberry compote.","Fold, proof, egg wash only on the light parts (or not at all), bake 165–170 °C fan."],
+temps:[["Proof","max 26–27 °C"],["Oven (fan)","165–170 °C"]],
+tricks:["Cocoa dough colours fast; bake a bit lower so the dark side doesn't burn.","Raspberry compote with pectin stays in place during baking."],
+mistakes:["Liquid raspberry: boils over and burns."],
+ask:[["What's a bicolore croissant dough?","Laminated dough covered with a thin coloured layer (cocoa or other) before cutting, for stripes."]]},
+
+{id:"cube",name:"Le cube à la pistache",fr:"Cube croissant pistache",fam:"Viennoiserie",diff:3,time:"Laminated dough + cube moulds",
+what:"A trendy viennoiserie: croissant dough baked inside a closed metal cube mould so it becomes a perfect cube, then filled with pistachio cream after baking.",
+ing:[["Croissant dough","1 batch"],["Cube moulds with lids","about 6–7 cm"],["Pistachio cream","crème pât 300 g + pistachio paste 60–80 g (+ some whipped cream for a diplomate)"],["Decoration","chopped pistachios, icing sugar or pistachio glaze"]],
+steps:["Roll the laminated dough to about 4 mm and cut strips or squares. Roll strips into spirals or stack squares so the layers face the sides.","Place in the buttered cube mould, the dough filling about half.","Proof (lid off) at 25–26 °C until it reaches about 3/4 of the mould.","Close the lid and bake 170–180 °C for 20–25 min.","Unmould, cool, then pipe the pistachio cream inside through a hole at the bottom (piping tip).","Decorate the top."],
+temps:[["Proof","max 26–27 °C"],["Oven","170–180 °C, closed mould"]],
+tricks:["Weigh each piece exactly: too much dough pushes the lid open, too little gives rounded corners.","Fill only when completely cold."],
+mistakes:["Overproofing before closing: the cube deforms or lifts the lid."],
+ask:[["Why is it closed during baking?","The lid forces the dough to fill the mould, so all sides are flat and caramelised."]]},
+
+{id:"chausson",name:"Chausson aux pommes",fr:"Apple turnover",fam:"Viennoiserie",diff:2,time:"Puff pastry + compote",
+what:"Puff pastry (not yeasted) folded around apple compote, scored with a leaf pattern, shiny on top.",
+ing:[["Puff pastry (feuilletage or feuilletage inversé)","about 80 g per piece"],["Apple compote (thick, little sugar)","60–80 g per piece"],["Egg wash","yolk + a little cream for colour"],["Syrup to finish","water and sugar 1:1, boiled"]],
+steps:["Roll the puff pastry to 3 mm, rest 15 min in the fridge.","Cut ovals with a fluted cutter (12–15 cm). Roll each oval slightly longer in the middle so it becomes thinner.","Put compote on one half, wet the edge, fold, press the edges.","Turn over, egg wash, rest in the fridge 20–30 min, egg wash again.","Score (rayer) a leaf or chevron pattern with the tip of a knife, without cutting through. Make 2–3 small holes for steam.","Bake 180–190 °C (fan 170–180), 25–30 min.","Brush with syrup as soon as they come out for shine."],
+temps:[["Oven","180–190 °C"],["Bake","25–30 min"]],
+tricks:["Cold pastry in a hot oven = maximum rise.","Thick compote: watery compote boils out and makes the bottom soggy."],
+mistakes:["Egg wash on the edges: they stick and won't rise.","Cutting through the top when scoring: the compote escapes."],
+ask:[["Is chausson dough yeasted?","No, it's puff pastry (pâte feuilletée). The rise comes from steam between the butter layers."]]},
+
+{id:"cinnamon",name:"Cinnamon roll",fr:"Roulé à la cannelle",fam:"Enriched dough",diff:1,time:"About 3–4 h",
+what:"Soft enriched dough rolled with cinnamon butter sugar, cut into spirals, often topped with cream cheese icing.",
+ing:[["Flour T45/T55","500 g"],["Milk (lukewarm)","220 g"],["Egg","1 (50 g)"],["Sugar","60 g"],["Butter (soft)","70 g"],["Fresh yeast","20 g"],["Salt","8 g"],["Filling: soft butter","100 g"],["Filling: brown sugar","120 g"],["Filling: cinnamon","12 g"],["Icing: cream cheese / butter / icing sugar","120 / 40 / 100 g"]],
+steps:["Mix flour, milk, egg, sugar, yeast, salt until the dough forms. Add the butter, knead until smooth and elastic.","Pointage about 1 h at 25 °C.","Roll into a rectangle about 40 × 30 cm, 5 mm thick.","Spread the filling, leaving a 2 cm strip clean on one long edge.","Roll up tightly toward the clean edge. Chill 15 min for clean cuts.","Cut 3–4 cm slices with dental floss or a sharp knife. Place in a buttered tin.","Proof 45–60 min until puffy and touching.","Bake 180 °C, 20–25 min. Ice while warm."],
+temps:[["Proof","25–28 °C"],["Oven","175–180 °C"]],
+tricks:["Tangzhong trick: cook 25 g flour with 125 g milk to a paste and add it to the dough: rolls stay soft for days.","Floss cuts without squashing the spiral."],
+mistakes:["Melted butter in the filling: it runs out and burns."],
+ask:[["What is tangzhong?","A cooked flour-water (or milk) paste. The gelatinised starch holds more water, so the bread stays softer."]]},
+
+{id:"hot-cross",name:"Hot cross bun",fr:"Hot cross bun",fam:"Enriched dough",diff:1,time:"About 3–4 h",
+what:"English spiced sweet bun with dried fruit, a white cross on top and a shiny glaze. Traditionally eaten at Easter.",
+ing:[["Flour","500 g"],["Milk","240 g"],["Egg","1"],["Butter","50 g"],["Sugar","60 g"],["Fresh yeast","20 g"],["Salt","7 g"],["Mixed spice + cinnamon","2 + 1 tsp"],["Orange zest","1 orange"],["Raisins / currants + candied peel","150 g + 50 g (soaked, drained)"],["Cross paste","flour 75 g + water 75 g"],["Glaze","apricot jam or sugar syrup"]],
+steps:["Mix dough as an enriched dough, butter added once the gluten forms.","Add the fruit at the end on slow speed so it doesn't get crushed.","Pointage about 1 h.","Divide 70–80 g, round tightly, place close together on a tray.","Proof 45–60 min.","Pipe the cross with the flour paste.","Bake 190–200 °C, 15–20 min. Brush with hot glaze as they come out."],
+temps:[["Proof","25–28 °C"],["Oven","190–200 °C"]],
+tricks:["Soak the dried fruit beforehand so it doesn't steal water from the dough.","Glaze immediately while hot for maximum shine."],
+mistakes:["Adding fruit too early: they break and colour the dough grey."],
+ask:[["What is the cross made of?","A simple flour and water paste piped before baking."]]},
+
+{id:"berliner",name:"Boule de Berlin",fr:"Berliner / krapfen / bomboloni",fam:"Enriched dough",diff:2,time:"About 3 h + frying",
+what:"Fried enriched dough ball filled with crème pâtissière, jam or chocolate, rolled in sugar. A light ring (collerette) around the middle is the sign of a good one.",
+ing:[["Flour T45","500 g"],["Milk","200 g"],["Eggs","2 (100 g)"],["Sugar","60 g"],["Butter","75 g"],["Fresh yeast","20 g"],["Salt","8 g"],["Lemon zest / vanilla","to taste"],["Frying oil","sunflower or frying fat"],["Filling","crème pât, jam, Nutella…"]],
+steps:["Enriched dough: mix, add butter, knead until smooth. Dough 24–25 °C.","Pointage about 1 h (or overnight in the fridge).","Divide 50–60 g, round tightly.","Proof on floured or papered trays 45–60 min at about 28 °C, slightly dry (no humidity), so the surface doesn't stick.","Fry at 170–175 °C about 1.5–2 min per side. Put the top side down first.","Drain, roll in sugar while warm.","Fill when cool by piping through the side."],
+temps:[["Oil","170–175 °C"],["Fry","1.5–2 min per side"]],
+tricks:["The white ring appears when the proof is right: the ball floats high in the oil.","Fry a test one first."],
+mistakes:["Overproofed: absorbs oil, greasy, collapses.","Oil too hot: dark outside, raw inside."],
+ask:[["What does the pale ring mean?","Correct proof and oil temperature: the doughnut floats high, so the middle never touches the oil."]]},
+
+{id:"panettone",name:"Panettone",fr:"Panettone (Milanese)",fam:"Festive sourdough",diff:3,time:"2–3 days including lievito madre refreshes",
+what:"The hardest item on the list. Very rich enriched dough leavened only with lievito madre, made in two doughs (impasti), baked in paper moulds and cooled upside down.",
+ing:[["Primo impasto: strong flour W 350+","300 g"],["Primo: lievito madre (refreshed 3x)","90 g"],["Primo: water","110 g"],["Primo: sugar","80 g"],["Primo: egg yolks","60 g"],["Primo: butter","90 g"],["Secondo: flour","60 g"],["Secondo: sugar","30 g"],["Secondo: yolks","70 g"],["Secondo: butter","90 g"],["Secondo: salt","4 g"],["Secondo: honey / vanilla / orange zest","10 g / 1 pod / 1"],["Candied orange + raisins","150 g + 150 g"]],
+steps:["Refresh the lievito madre 2–3 times (each one triples in 3.5–4 h at 26–28 °C).","Primo impasto: flour + madre + water until strong, then sugar in parts, then yolks in parts, then soft butter. Dough 26–27 °C.","Ferment 10–12 h at 26–28 °C until it has tripled.","Secondo impasto: add primo + flour, build gluten again, then sugar, yolks and salt in parts, then butter, then flavourings, then fruit last.","Rest 45–60 min on the bench, divide, round (pirlatura) twice with buttered hands, place in paper moulds.","Proof 5–7 h at 28–30 °C until the dome is 1–2 cm below the rim.","Let a skin form 15–20 min, cut a cross (scarpatura), fold the corners, put a knob of butter in the centre.","Bake 160–170 °C, about 45–55 min for 1 kg, until the core is 92–94 °C.","Pierce with skewers at the base and hang upside down for 8–12 h."],
+temps:[["Lievito madre","triples in 3.5–4 h at 27 °C"],["Fermentations","26–30 °C"],["Core when done","92–94 °C"],["Cool","upside down 8–12 h"]],
+tricks:["Add sugar, yolks and butter in parts, waiting for each to be absorbed: the gluten must never break.","The dough is ready when it's glossy and comes away from the bowl like a veil.","Dough temperature above 28 °C makes the butter separate: stop and cool the bowl."],
+mistakes:["Weak lievito madre: dense, sour panettone.","Not hanging upside down: it collapses on itself."],
+ask:[["Why upside down?","The crumb is so soft and rich that it collapses under its own weight while hot. Hanging it keeps the dome and the airy structure."],["Why two doughs?","The first ferments long to build strength and flavour; the second adds most of the sugar, fat and fruit without killing the fermentation."]]},
+
+{id:"colomba",name:"La colomba",fr:"Colomba pasquale (Easter dove)",fam:"Festive sourdough",diff:3,time:"2–3 days",
+what:"The Easter cousin of panettone: same lievito madre dough in two impasti, but baked in a dove-shaped mould, with candied orange only (no raisins) and a crunchy almond glaze.",
+ing:[["Panettone-style dough","1 batch, with candied orange instead of raisins"],["Glaze (glassa): sugar","100 g"],["Glaze: almond powder (or hazelnut)","40 g"],["Glaze: egg white","50–60 g"],["Glaze: cornstarch","5 g"],["Topping","whole almonds + pearl sugar + icing sugar"]],
+steps:["Make the dough exactly like panettone through the secondo impasto, adding candied orange.","Divide each dove into 2 pieces: one long for the 'body', one cut in two for the 'wings'. Lay them across in the paper mould.","Proof 5–7 h at 28–30 °C until almost the top of the mould.","Spread the glaze carefully, add almonds, pearl sugar, dust with icing sugar.","Bake 165–170 °C until 92–94 °C core.","Cool upside down with skewers, like panettone."],
+temps:[["Proof","28–30 °C"],["Oven","165–170 °C"],["Core","92–94 °C"]],
+tricks:["Make the glaze the day before, it spreads better."],
+mistakes:["Glaze too runny: it drips and burns on the paper."],
+ask:[["Difference colomba vs panettone?","Shape (dove mould), no raisins (candied orange only) and the almond glaze on top. Eaten at Easter, panettone at Christmas."]]},
+
+{id:"chou",name:"Le chou citron & myrtille",fr:"Chou craquelin, crème citron, myrtille",fam:"Pâtisserie",diff:2,time:"About 3 h",
+what:"A choux bun with a crunchy craquelin top, filled with a lemon cream and a blueberry heart (compote or insert).",
+ing:[["Choux: water / milk","125 g / 125 g"],["Choux: butter","110 g"],["Choux: salt / sugar","4 g / 5 g"],["Choux: flour T55","140 g"],["Choux: eggs","about 250 g (adjust)"],["Craquelin: butter / brown sugar / flour","50 / 60 / 60 g"],["Lemon cream: juice + zest","100 g + 2 lemons"],["Lemon cream: sugar / eggs / butter","100 / 120 / 150 g"],["Blueberry compote: blueberries / sugar / pectin NH","200 / 30 / 3 g"]],
+steps:["Craquelin: mix into a paste, roll 2 mm between papers, freeze, cut discs the size of the choux.","Choux: boil water, milk, butter, salt, sugar. Off the heat add all the flour, mix. Dry the panade on the heat 1–2 min until a film forms on the pan.","Put in a mixer with the paddle, let steam escape, add eggs gradually. Correct texture: glossy, a V-shaped 'flag' that falls slowly from the spatula, a line drawn with the finger closes slowly.","Pipe 4–5 cm balls, put a craquelin disc on each.","Bake 160–170 °C fan, 30–40 min. Don't open the door before they are well coloured.","Lemon cream: cook juice, zest, sugar and eggs to 82–85 °C, cool to 40 °C, blend in the butter.","Blueberry compote: heat blueberries, add sugar mixed with pectin, boil 1 min, cool.","Fill: a little lemon cream, a spoon of compote in the centre, finish with lemon cream. Decorate with a blueberry or zest."],
+temps:[["Oven (fan)","160–170 °C"],["Lemon cream","cook to 82–85 °C, butter at 40 °C"]],
+tricks:["Mixing pectin with sugar first prevents lumps.","Craquelin makes perfectly round choux even if piping isn't perfect."],
+mistakes:["Too many eggs: the choux spread flat.","Opening the oven too early: they collapse."],
+ask:[["Why do choux puff?","The high water content turns into steam in the hot oven and the egg/starch structure sets around it, leaving a hollow."]]},
+
+{id:"flan",name:"Flan parisien",fr:"Flan pâtissier",fam:"Pâtisserie",diff:1,time:"1.5 h + overnight in the fridge",
+what:"Thick vanilla custard tart with a dark caramelised top, on pastry (brisée or feuilletée). Very classic in French bakeries.",
+ing:[["Pastry (brisée or puff)","about 350 g for a 22 cm ring, 5 cm high"],["Whole milk","750 g"],["Cream","250 g"],["Sugar","200 g"],["Eggs","200 g (4)"],["Cornstarch (maïzena)","80–90 g"],["Vanilla","1–2 pods"]],
+steps:["Line a tall ring with pastry, chill well (freeze 30 min).","Boil milk, cream, half the sugar and vanilla.","Whisk eggs, the rest of the sugar and cornstarch.","Pour part of the hot milk over the eggs, whisk, put everything back in the pan and cook while whisking until it thickens and boils 1 min.","Pour hot into the cold pastry, smooth the top.","Bake 170–180 °C for 45–60 min until the top is dark brown in patches.","Cool, then chill at least 6 h, ideally overnight, before cutting."],
+temps:[["Oven","170–180 °C, 45–60 min"],["Before cutting","fully cold, overnight"]],
+tricks:["Pour the cream hot onto frozen pastry: the bottom stays crisp.","Wet knife, cleaned between each cut, for clean slices."],
+mistakes:["Cutting while warm: it runs.","Not cooking the cream enough on the stove: grainy, watery flan."],
+ask:[["Is the cream cooked before baking?","Yes, in most professional recipes it's cooked like a crème pâtissière, then baked."]]},
+
+{id:"cheesecake",name:"Cheesecake basque",fr:"Basque burnt cheesecake (San Sebastián)",fam:"Pâtisserie",diff:1,time:"1 h + cooling + overnight",
+what:"Crustless cheesecake baked very hot so the top is almost black and caramelised while the centre stays creamy and soft. Baked in crumpled parchment.",
+ing:[["Cream cheese (room temperature)","900 g"],["Sugar","300 g"],["Eggs","5 (250 g)"],["Whipping cream 35 %","450 g"],["Flour","25 g"],["Salt","a pinch"],["Vanilla","optional"]],
+steps:["Line a 22–24 cm mould with 2 sheets of crumpled parchment, higher than the rim.","Mix cream cheese and sugar smooth on low speed (paddle, not whisk).","Add eggs one by one, then the cream, then the sifted flour and salt. Mix as little as possible.","Pour in, bake 220–240 °C for 25–35 min until the top is very dark and the centre wobbles a lot.","Cool at room temperature (it sinks, that's normal), then chill overnight."],
+temps:[["Oven","220–240 °C"],["Bake","25–35 min, centre still wobbly"]],
+tricks:["All ingredients at room temperature: no lumps.","Low speed: less air, fewer cracks."],
+mistakes:["Baking until set in the middle: dry, cakey, loses the creamy centre."],
+ask:[["Why does it have no base?","The very hot oven caramelises the outside of the batter itself: that's the crust."]]}
+];
+
+const GLOSSARY = [
+["Pesée","Weighing / scaling the ingredients."],["Autolyse","Resting flour and water before adding salt and yeast, so gluten forms by itself."],["Pétrissage","Mixing/kneading the dough."],["Frasage","First slow-speed mixing stage, combining the ingredients."],["Bassinage","Adding extra water at the end of mixing."],["Pointage","Bulk (first) fermentation of the whole dough."],["Rabat","A fold during pointage to strengthen the dough."],["Pâton","A piece of dough after dividing."],["Préfaçonnage","Pre-shaping."],["Détente","Bench rest after pre-shaping."],["Façonnage","Final shaping."],["Apprêt","Final proof after shaping."],["Pousse contrôlée","Programmable proofer-retarder (cold then warm)."],["Grigne","The opening/ear formed where bread is scored."],["Lame","Razor blade for scoring."],["Buée","Steam injected in the oven."],["Ressuage","Cooling after baking, when steam leaves the loaf."],["Couche","Heavy linen cloth used to proof baguettes."],["Banneton","Proofing basket."],["Coupe-pâte","Dough scraper/cutter."],["Fleurer","To dust with flour."],["Abaisser","To roll out dough."],["Détrempe","The dough part of a laminated dough, before the butter."],["Beurrage","Locking the butter into the détrempe."],["Tourage","Folding/rolling to make layers."],["Tour simple","Fold in 3 (letter fold)."],["Tour double","Fold in 4 (book fold), also tour portefeuille."],["Dorure","Egg wash."],["Rayer","Scoring a decorative pattern on puff pastry."],["Chiqueter","Marking the edges of puff pastry with a knife so they rise evenly."],["Panade","Cooked flour-water-butter base of pâte à choux."],["Crème pâtissière","Pastry cream: milk, yolks, sugar, starch, cooked."],["Levain","Natural sourdough starter."],["Rafraîchi","Refreshment/feeding of the levain."],["Lievito madre","Italian stiff mother dough (about 45–50 % water)."],["Rinfresco","Italian for feeding the lievito madre."],["Primo / secondo impasto","First and second dough of panettone."],["Pirlatura","Rounding panettone dough with buttered hands to create tension."],["Poolish","Liquid preferment: equal flour and water + a little yeast."],["Biga","Italian stiff preferment (about 50 % water)."],["Taux d'hydratation","Hydration: water as a % of flour."],["Four à sole","Deck oven, for bread."],["Four ventilé","Convection (fan) oven, for viennoiserie."],["Fournil","The bread-making room of a bakery."],["Viennoiserie","Yeasted, often laminated breakfast pastries (croissant, brioche…)."],["Le voile","Window-pane test for gluten development."],["Croûter","When the dough surface dries and forms a skin (to avoid)."],["Fond de pâte","Pastry base of a tart."]
+];
+
+const QUIZ = [
+["What is the 'pointage'?",["The final proof","The bulk (first) fermentation","Scoring the bread","Cooling"],1,"Pointage = first fermentation of the whole dough mass. Apprêt is the final proof after shaping."],
+["What is the 'apprêt'?",["Final proof after shaping","Mixing at slow speed","Folding butter into dough","Weighing"],0,"Apprêt is the second rise, after façonnage."],
+["What's the maximum proofing temperature for croissants?",["About 35 °C","About 32 °C","About 26–28 °C","About 18 °C"],2,"Above 27–28 °C the butter starts to melt and leak out, and you lose the layers."],
+["A tour simple folds the dough in…",["2","3","4","6"],1,"Simple = 3 (letter fold). Double = 4 (book fold)."],
+["1 double turn + 1 simple turn gives how many butter layers?",["7","12","24","27"],1,"4 × 3 = 12. Three simple turns give 3 × 3 × 3 = 27."],
+["Which flour is typical for a baguette de tradition?",["T45","T65","T110","Rye T170"],1,"T65: more flavour and colour. T45 is for pastry."],
+["Why does pâte à choux puff in the oven?",["Baking powder","Yeast","Steam from the water in the dough","Whipped egg whites"],2,"No raising agent: the water becomes steam and the structure sets around it."],
+["The hydration of lievito madre is about…",["100 %","75 %","45–50 %","20 %"],2,"It's a stiff mother dough. A liquid levain is about 100 %."],
+["How is panettone cooled?",["In the fridge","Upside down, hanging","Under a cloth","In the mould, right side up"],1,"Hung upside down for 8–12 h, otherwise it collapses."],
+["Core temperature of a baked panettone?",["75 °C","85 °C","92–94 °C","110 °C"],2,"92–94 °C at the centre means it's cooked."],
+["In which oven are croissants usually baked?",["Deck oven with lots of steam","Convection (ventilated) oven at 165–180 °C","Wood oven at 300 °C","Steam oven at 100 °C"],1,"Viennoiserie goes in the convection oven; bread in the deck oven."],
+["Why do we inject steam (buée) for bread?",["To cook faster","To keep the surface soft so the loaf expands and gets a shiny crust","To make the crumb wet","To stop the colour"],1,"Steam delays crust formation: bigger oven spring, open grignes, shiny crisp crust."],
+["Dough at 25 °C wanted. Flour 20 °C, room 22 °C, friction 10 °C, no preferment. Water temperature?",["13 °C","23 °C","30 °C","45 °C"],1,"Water = 25 × 3 − (20 + 22 + 10) = 75 − 52 = 23 °C."],
+["Why shouldn't you knead rye dough a long time?",["It burns the mixer","Rye has little gluten; long mixing just makes it stickier","It loses its colour","It ferments too slowly"],1,"Rye relies on pentosans and acidity, not gluten. Mix only until homogeneous."],
+["When can you slice a tourte de seigle?",["Right away","After 1 h","After 12–24 h","After 1 week"],2,"The crumb needs time to set. Same day = sticky."],
+["What gives bagels their shiny chewy crust?",["Brushing with oil","Boiling in malted water before baking","Baking at 300 °C","Egg yolk"],1,"Boiling gelatinises the surface; malt gives the shine and colour."],
+["The pale ring around a Berliner shows…",["It's raw","It's overproofed","Good proof and correct oil temperature","Too much sugar"],2,"A well-proofed ball floats high so the middle never touches the oil."],
+["When do you cut a flan parisien?",["Hot out of the oven","After 10 minutes","When fully cold, ideally next day","Never"],2,"It needs to set in the fridge for clean slices."],
+["The pastry of a chausson aux pommes is…",["Brioche","Puff pastry (pâte feuilletée)","Choux","Sablée"],1,"Puff pastry, not yeasted."],
+["What's inside a classic suisse?",["Almond cream","Crème pâtissière and chocolate chips","Apple compote","Jam"],1,"Vanilla crème pât + chocolate chips."],
+["What's the Italian stiff preferment used for ciabatta?",["Poolish","Biga","Levain liquide","Tangzhong"],1,"Biga. Poolish is the liquid one."],
+["A poolish is made of…",["Equal weights flour and water + a little yeast","Flour + eggs","Rye + honey","Butter + flour"],0,"100 % hydration, small amount of yeast, 12–16 h."],
+["What is the autolyse?",["Adding the salt","Resting flour + water before adding yeast and salt","Baking without steam","A type of levain"],1,"Gluten starts to form by itself, the dough gets smoother."],
+["The window-pane test (le voile) checks…",["The temperature","Gluten development","The salt quantity","The proof"],1,"A thin translucent membrane = well-developed gluten."],
+["Fresh yeast to instant dry yeast ratio?",["1 : 1","2 : 1","3 : 1","10 : 1"],2,"10 g fresh ≈ 3.3 g instant."],
+["What makes beurre de tourage special?",["It's salted","Higher fat, less water, stays plastic when cold","It's made from goat milk","It's melted"],1,"About 84 % fat; it can be rolled thin without breaking."],
+["What tops a colomba?",["A flour cross","Almond glaze, almonds and pearl sugar","Cream cheese icing","Chocolate"],1,"The glassa: sugar, almond powder, egg white."],
+["The cross on a hot cross bun is made of…",["Icing","Flour and water paste","Pastry strips","Marzipan"],1,"Piped flour-water paste before baking."],
+["What does the craquelin do on choux?",["Adds colour only","Makes them round, even and crunchy","Makes them bigger with yeast","Replaces the eggs"],1,"The thin sugar-butter-flour disc holds the shape and gives a crisp top."],
+["How do you know a Basque cheesecake is done?",["Firm in the centre","Very dark top and a wobbly centre","A knife comes out clean","Golden pale top"],1,"It sets as it cools. Overbaked = dry."],
+["Salt and yeast…",["Should be mixed together first","Shouldn't sit in direct contact for long; salt slows yeast","Are the same thing","Make the dough sweeter"],1,"Salt inhibits yeast. Add them separately."],
+["What's the 'ressuage'?",["Mixing","Scoring","Cooling after baking","Proofing"],2,"Steam leaves the loaf and the crumb sets."],
+["Which preferment is used for panettone?",["Biga","Poolish","Lievito madre","No preferment"],2,"Panettone is leavened only by lievito madre (traditionally)."],
+["Panettone flour strength (W)?",["W 150","W 220","W 350–400","Rye"],2,"Very strong flour is needed to hold all the sugar, butter and yolks."]
+];
+
+const TRIAL = [
+"Ask the day before: start time, what to wear and bring (knife, shoes, apron?), who to ask for.",
+"Arrive 10 minutes early. Hair tied, no jewellery, short clean nails, closed non-slip shoes.",
+"Bring a small notebook and pen in your pocket. Write down weights, times and temperatures.",
+"Wash your hands when you arrive and every time you change task.",
+"Say what you know and what you don't. 'I haven't done it yet, can you show me once?' is a good sentence.",
+"Repeat instructions back to be sure: 'So 350 g, five scores, into the deck oven?'",
+"Ask the bakery's own numbers: their dough temperature, base temperature, oven settings, their recipe for croissant turns.",
+"Clean your station as you go. Scraper, brush, cloth always near you.",
+"Speed comes later: regular, identical pieces matter more than fast ones.",
+"Kitchen calls: 'Chaud!' (hot, behind you), 'Derrière!' (I'm behind you), 'Attention!'.",
+"Never leave a timer or the oven unattended. If you put something in, you watch it.",
+"When there's nothing to do, ask 'What can I do now?' or start washing up. Never stand still with your phone.",
+"Taste the products if they offer. Ask what sells the most.",
+"At the end, thank the team, ask for feedback and what they want to see next time."
+];
+
+/* ============ STATE ============ */
+const KEY="fournil-v1";
+let S={done:{},trial:{},best:0};
+try{const raw=localStorage.getItem(KEY);if(raw)S=Object.assign(S,JSON.parse(raw))}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+const app=document.getElementById("app");
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const total=()=>MODULES.length+RECIPES.length;
+function doneCount(){return [...MODULES,...RECIPES].filter(x=>S.done[x.id]).length}
+function updProg(){const d=doneCount(),t=total();document.getElementById("progtxt").textContent=d+" / "+t+" studied";document.getElementById("progbar").style.width=(100*d/t)+"%"}
+function toggleDone(id){S.done[id]=!S.done[id];save();updProg();route()}
+const dots=n=>"●".repeat(n)+"○".repeat(3-n);
+
+/* ============ VIEWS ============ */
+function viewHome(){
+  const nextM=MODULES.find(m=>!S.done[m.id]);const nextR=RECIPES.find(r=>!S.done[r.id]);
+  return `<section class="view">
+  <div class="intro"><span class="hand">For the trial day at the bakery</span>
+  <h1>Recipes to learn, one page at a time</h1>
+  <p>Everything from the notebook list: the 18 recipes, the steps of fermentation, the basic doughs, lievito madre, ovens and temperatures, and the little tricks. Read a page, mark it as studied, then test yourself with the flashcards and the quiz.</p></div>
+  <div class="grid">
+    <a class="card" href="#${nextM?nextM.id:"basics"}"><span class="label">Continue learning</span><h3>${nextM?esc(nextM.title):"All fundamentals done"}</h3><p class="muted">${nextM?esc(nextM.sub):"Review them anytime."}</p></a>
+    <a class="card" href="#${nextR?"r-"+nextR.id:"recipes"}"><span class="label">Next recipe</span><h3>${nextR?esc(nextR.name):"All recipes done"}</h3><p class="muted">${nextR?esc(nextR.fam):"Try the quiz."}</p></a>
+    <a class="card" href="#quiz"><span class="label">Quiz</span><h3>Best score: ${S.best} / 10</h3><p class="muted">10 random questions with explanations.</p></a>
+  </div>
+  <div class="card"><h2>A 4-day study plan</h2>
+  <div class="tablewrap"><table><tr><th>Day</th><th>Study</th><th>Then</th></tr>
+  <tr><td><b>1</b></td><td>Steps of fermentation · Basic doughs · Flour & baker's %</td><td>Flashcards: Vocabulary</td></tr>
+  <tr><td><b>2</b></td><td>Ovens & temperatures · Croissant · Pain au chocolat · Suisses · Cube · Chausson</td><td>Quiz</td></tr>
+  <tr><td><b>3</b></td><td>Levain & lievito madre · Baguette · Ciabatta · Tourte de seigle · Bagels · Panettone · Colomba</td><td>Flashcards: Temperatures</td></tr>
+  <tr><td><b>4</b></td><td>Enriched doughs (cinnamon, hot cross, Berliner) · Chou · Flan · Cheesecake · Tricks · Trial checklist</td><td>Quiz until 8/10+</td></tr>
+  </table></div>
+  <p class="muted">Less time? Do the 3 must-knows: <a href="#m-steps">fermentation steps</a>, <a href="#r-croissant">croissant</a> and <a href="#m-oven">temperatures</a>.</p></div>
+  <div class="note tip"><span class="hand">Good to know:</span> every bakery has its own numbers. Use these as a solid base and say "how do you do it here?" on the day. Chefs like people who ask.</div>
+  </section>`;
+}
+function viewBasics(){
+  return `<section class="view"><div class="intro"><span class="hand">Theory first</span><h1>Fundamentals</h1><p>The "most important things to learn" from the notebook, one page each.</p></div>
+  <div class="grid">${MODULES.map(m=>`<a class="card" href="#${m.id}"><div class="cardtop"><h3>${esc(m.title)}</h3><span class="tick ${S.done[m.id]?"on":""}">✓</span></div><p class="muted">${esc(m.sub)}</p><div class="chips"><span class="chip">${m.min} min read</span></div></a>`).join("")}</div></section>`;
+}
+function viewModule(m){
+  return `<section class="view detail"><a class="back" href="#basics">← Fundamentals</a>
+  <div class="intro"><span class="label">${m.min} min read</span><h1>${esc(m.title)}</h1><p class="muted">${esc(m.sub)}</p></div>
+  <div class="prose">${m.html}</div>
+  <div class="row"><button class="btn ${S.done[m.id]?"good":"primary"}" data-done="${m.id}">${S.done[m.id]?"✓ Studied (tap to undo)":"Mark as studied"}</button>${nextLink(MODULES,m,"")}</div></section>`;
+}
+let famFilter="All";
+function viewRecipes(){
+  const fams=["All",...new Set(RECIPES.map(r=>r.fam))];
+  const list=RECIPES.filter(r=>famFilter==="All"||r.fam===famFilter);
+  return `<section class="view"><div class="intro"><span class="hand">The notebook list</span><h1>Recipes</h1><p>Quantities are a solid starting point for a small batch. Difficulty: ● easy, ●●● hard.</p></div>
+  <div class="filters" role="group" aria-label="Filter by family">${fams.map(f=>`<button data-fam="${esc(f)}" aria-pressed="${f===famFilter}">${esc(f)}</button>`).join("")}</div>
+  <div class="grid">${list.map(r=>`<a class="card" href="#r-${r.id}"><div class="cardtop"><h3>${esc(r.name)}</h3><span class="tick ${S.done[r.id]?"on":""}">✓</span></div><p class="muted">${esc(r.fr)}</p><div class="chips"><span class="chip v">${esc(r.fam)}</span><span class="chip diff" title="Difficulty">${dots(r.diff)}</span></div></a>`).join("")}</div></section>`;
+}
+function nextLink(arr,item,prefix){const i=arr.indexOf(item);const n=arr[i+1];return n?`<a class="btn" href="#${prefix}${n.id}">Next: ${esc(n.name||n.title)} →</a>`:""}
+function viewRecipe(r){
+  return `<section class="view detail"><a class="back" href="#recipes">← All recipes</a>
+  <div class="intro"><div class="chips"><span class="chip v">${esc(r.fam)}</span><span class="chip diff">${dots(r.diff)}</span><span class="chip">${esc(r.time)}</span></div>
+  <h1>${esc(r.name)}</h1><p class="hand">${esc(r.fr)}</p><p>${esc(r.what)}</p></div>
+  <div class="temps">${r.temps.map(t=>`<div class="temp"><span class="label">${esc(t[0])}</span><b>${esc(t[1])}</b></div>`).join("")}</div>
+  <div class="two">
+    <div class="card"><h3>Ingredients</h3><div class="tablewrap"><table>${r.ing.map(i=>`<tr><td>${esc(i[0])}</td><td class="q">${esc(i[1])}</td></tr>`).join("")}</table></div></div>
+    <div class="card"><h3>Method</h3><ol class="steps">${r.steps.map(s=>`<li><div>${esc(s)}</div></li>`).join("")}</ol></div>
+  </div>
+  <div class="two">
+    <div class="note tip"><span class="hand">Tricks</span><ul class="clean">${r.tricks.map(t=>`<li>${esc(t)}</li>`).join("")}</ul></div>
+    <div class="note"><span class="hand" style="color:var(--red)">Common mistakes</span><ul class="clean">${r.mistakes.map(t=>`<li>${esc(t)}</li>`).join("")}</ul></div>
+  </div>
+  <div class="ask"><h3>If the chef asks…</h3>${r.ask.map(a=>`<details><summary>${esc(a[0])}</summary><p>${esc(a[1])}</p></details>`).join("")}</div>
+  <div class="row"><button class="btn ${S.done[r.id]?"good":"primary"}" data-done="${r.id}">${S.done[r.id]?"✓ Studied (tap to undo)":"Mark as studied"}</button>${nextLink(RECIPES,r,"r-")}</div></section>`;
+}
+
+/* flashcards */
+function buildDecks(){
+  const vocab=GLOSSARY.map(g=>({f:g[0],b:g[1]}));
+  const temps=[];RECIPES.forEach(r=>r.temps.forEach(t=>temps.push({f:r.name+": "+t[0],b:t[1]})));
+  const recipes=RECIPES.map(r=>({f:r.name,b:r.what}));
+  return {"Vocabulary":vocab,"Temperatures":temps,"What is it?":recipes};
+}
+const DECKS=buildDecks();
+let deck="Vocabulary",order=[],ci=0,missed=new Set();
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function startDeck(name){deck=name;order=shuffle(DECKS[name]);ci=0;missed=new Set()}
+startDeck(deck);
+function viewCards(){
+  const c=order[ci];
+  const body=c?`<div class="flash"><div class="fc" id="fc" tabindex="0" role="button" aria-label="Flip card"><div class="face"><div><span class="label">${esc(deck)} · ${ci+1} / ${order.length}</span><p class="big">${esc(c.f)}</p><p class="muted">Tap to flip</p></div></div><div class="face back"><p>${esc(c.b)}</p></div></div></div>
+  <div class="row" style="justify-content:center"><button class="btn" data-fc="again">Again later</button><button class="btn good" data-fc="know">I knew it</button></div>`
+  :`<div class="card" style="text-align:center"><h2>Deck finished</h2><p>You knew ${DECKS[deck].length-missed.size} of ${DECKS[deck].length} on the first try.</p><div class="row" style="justify-content:center"><button class="btn primary" data-deck="${esc(deck)}">Restart this deck</button></div></div>`;
+  return `<section class="view"><div class="intro"><span class="hand">Repeat until it sticks</span><h1>Flashcards</h1><p>Cards you miss go back to the end of the pile.</p></div>
+  <div class="filters" role="group" aria-label="Deck">${Object.keys(DECKS).map(d=>`<button data-deck="${esc(d)}" aria-pressed="${d===deck}">${esc(d)} (${DECKS[d].length})</button>`).join("")}</div>${body}</section>`;
+}
+
+/* quiz */
+let Q=null;
+function newQuiz(){Q={qs:shuffle(QUIZ).slice(0,10).map(q=>{const idx=shuffle(q[1].map((_,i)=>i));return {t:q[0],opts:idx.map(i=>q[1][i]),ans:idx.indexOf(q[2]),why:q[3]}}),i:0,score:0,picked:null}}
+function viewQuiz(){
+  if(!Q)newQuiz();
+  if(Q.i>=Q.qs.length){if(Q.score>S.best){S.best=Q.score;save()}
+    return `<section class="view"><div class="intro"><h1>${Q.score} / 10</h1><p>${Q.score>=8?"Ready for the trial. Great work.":Q.score>=5?"Good base. Review the pages of the questions you missed.":"Read the Fundamentals pages again, then retry."}</p><p class="muted">Best score: ${S.best} / 10</p></div><div class="row"><button class="btn primary" data-quiz="new">New quiz</button><a class="btn" href="#basics">Fundamentals</a></div></section>`}
+  const q=Q.qs[Q.i],p=Q.picked;
+  return `<section class="view"><div class="intro"><span class="label">Question ${Q.i+1} of 10 · score ${Q.score}</span><h2 style="color:var(--ink)">${esc(q.t)}</h2></div>
+  <div class="qopts">${q.opts.map((o,i)=>`<button data-opt="${i}" ${p!==null?"disabled":""} class="${p===null?"":i===q.ans?"right":i===p?"wrong":""}">${esc(o)}</button>`).join("")}</div>
+  ${p!==null?`<div class="note ${p===q.ans?"tip":""}"><b>${p===q.ans?"Correct.":"Not quite."}</b> ${esc(q.why)}</div><div class="row"><button class="btn primary" data-quiz="next">${Q.i===9?"See result":"Next question →"}</button></div>`:""}</section>`;
+}
+
+/* tools */
+function viewTools(){
+  return `<section class="view"><div class="intro"><span class="hand">Bakery maths</span><h1>Calculators</h1></div>
+  <div class="card"><h2>Water temperature</h2><p class="muted">To hit the right dough temperature after mixing. Water = (target × factors) − (flour + room + friction [+ preferment]).</p>
+  <div class="form">
+   <label for="t-target">Target dough °C<input id="t-target" type="number" value="25" inputmode="decimal"></label>
+   <label for="t-flour">Flour °C<input id="t-flour" type="number" value="20" inputmode="decimal"></label>
+   <label for="t-room">Room °C<input id="t-room" type="number" value="22" inputmode="decimal"></label>
+   <label for="t-fric">Friction °C<select id="t-fric"><option value="3">By hand (≈3)</option><option value="10" selected>Spiral mixer (≈10)</option><option value="14">Fork/long mix (≈14)</option></select></label>
+   <label for="t-pre">Preferment °C (empty if none)<input id="t-pre" type="number" placeholder="none" inputmode="decimal"></label>
+  </div>
+  <p>Use water at <span class="result" id="t-out">—</span></p><p class="muted" id="t-note"></p></div>
+  <div class="card"><h2>Baker's percentage scaler</h2><p class="muted">Enter the flour weight and percentages; everything else follows.</p>
+  <div class="form">
+   <label for="b-flour">Flour (g)<input id="b-flour" type="number" value="1000" inputmode="decimal"></label>
+   <label for="b-hyd">Hydration %<input id="b-hyd" type="number" value="70" inputmode="decimal"></label>
+   <label for="b-salt">Salt %<input id="b-salt" type="number" value="1.8" step="0.1" inputmode="decimal"></label>
+   <label for="b-yeast">Fresh yeast %<input id="b-yeast" type="number" value="0.5" step="0.1" inputmode="decimal"></label>
+   <label for="b-lev">Levain %<input id="b-lev" type="number" value="20" inputmode="decimal"></label>
+   <label for="b-piece">Piece weight (g)<input id="b-piece" type="number" value="350" inputmode="decimal"></label>
+  </div>
+  <div class="tablewrap"><table id="b-out"></table></div></div>
+  <div class="card"><h2>Yeast converter</h2><div class="form"><label for="y-fresh">Fresh yeast (g)<input id="y-fresh" type="number" value="20" inputmode="decimal"></label></div><p>= <b id="y-out"></b> instant dry yeast, or <b id="y-out2"></b> active dry yeast.</p></div>
+  </section>`;
+}
+function calcTools(){
+  const v=id=>parseFloat(document.getElementById(id).value);
+  const tg=v("t-target"),fl=v("t-flour"),rm=v("t-room"),fr=v("t-fric"),pre=v("t-pre");
+  const hasPre=!isNaN(pre);const n=hasPre?4:3;
+  const w=tg*n-(fl+rm+fr+(hasPre?pre:0));
+  document.getElementById("t-out").textContent=isNaN(w)?"—":w.toFixed(0)+" °C";
+  document.getElementById("t-note").textContent=isNaN(w)?"":w<2?"Below 2 °C: use ice (or crushed ice + water) and chill the flour.":w>45?"Above 45 °C risks harming the yeast; warm the room or flour instead.":"Measure the dough after mixing and adjust next time.";
+  const F=v("b-flour"),h=v("b-hyd"),s=v("b-salt"),y=v("b-yeast"),l=v("b-lev"),pc=v("b-piece");
+  const rows=[["Flour",F],["Water",F*h/100],["Salt",F*s/100],["Fresh yeast",F*y/100],["Levain",F*l/100]];
+  const tot=rows.reduce((a,r)=>a+(r[1]||0),0);
+  document.getElementById("b-out").innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td class="q">${isNaN(r[1])?"—":(r[1]<20?r[1].toFixed(1):Math.round(r[1]))+" g"}</td></tr>`).join("")+`<tr><td><b>Total dough</b></td><td class="q">${Math.round(tot)} g</td></tr><tr><td><b>Pieces of ${pc||"?"} g</b></td><td class="q">${pc>0?Math.floor(tot/pc):"—"}</td></tr>`;
+  const yf=v("y-fresh");document.getElementById("y-out").textContent=isNaN(yf)?"—":(yf/3).toFixed(1)+" g";document.getElementById("y-out2").textContent=isNaN(yf)?"—":(yf/2.5).toFixed(1)+" g";
+}
+
+function viewGlossary(){
+  return `<section class="view"><div class="intro"><span class="hand">Les mots du fournil</span><h1>Glossary</h1><p>The words the chef will use. Search to find one fast.</p></div>
+  <div class="form" style="max-width:360px"><label for="g-search">Search<input id="g-search" type="search" placeholder="e.g. apprêt"></label></div>
+  <div class="card"><div class="tablewrap"><table id="g-tab"></table></div></div></section>`;
+}
+function fillGlossary(q){q=(q||"").toLowerCase();document.getElementById("g-tab").innerHTML=GLOSSARY.filter(g=>(g[0]+g[1]).toLowerCase().includes(q)).map(g=>`<tr><td><b>${esc(g[0])}</b></td><td>${esc(g[1])}</td></tr>`).join("")||`<tr><td class="muted">No word matches. Try fewer letters.</td></tr>`}
+
+function viewTrial(){
+  const n=TRIAL.filter((_,i)=>S.trial[i]).length;
+  return `<section class="view"><div class="intro"><span class="hand">Six hours to show who you are</span><h1>Trial day</h1><p>Nobody expects a beginner to know everything. They look at attitude, hygiene, listening and care. Tick these off as you prepare.</p><p class="label">${n} / ${TRIAL.length} ready</p></div>
+  <div class="card check">${TRIAL.map((t,i)=>`<label for="tr-${i}"><input type="checkbox" id="tr-${i}" data-trial="${i}" ${S.trial[i]?"checked":""}><span>${esc(t)}</span></label>`).join("")}</div>
+  <div class="card"><h2>Useful sentences</h2><div class="tablewrap"><table>
+  <tr><th>French</th><th>English</th></tr>
+  <tr><td>Vous pouvez me montrer une fois ?</td><td>Can you show me once?</td></tr>
+  <tr><td>Combien ça pèse, un pâton ?</td><td>How much does one piece weigh?</td></tr>
+  <tr><td>Quelle température pour le four ?</td><td>What temperature for the oven?</td></tr>
+  <tr><td>Je les mets où ?</td><td>Where do I put them?</td></tr>
+  <tr><td>C'est bon comme ça ?</td><td>Is it right like this?</td></tr>
+  <tr><td>Qu'est-ce que je peux faire maintenant ?</td><td>What can I do now?</td></tr>
+  </table></div></div></section>`;
+}
+
+/* ============ ROUTER ============ */
+function route(){
+  const h=(location.hash||"#home").slice(1);
+  let html,tab=h;
+  const m=MODULES.find(x=>x.id===h);
+  const r=h.startsWith("r-")&&RECIPES.find(x=>"r-"+x.id===h);
+  if(m){html=viewModule(m);tab="basics"}
+  else if(r){html=viewRecipe(r);tab="recipes"}
+  else html=({basics:viewBasics,recipes:viewRecipes,cards:viewCards,quiz:viewQuiz,tools:viewTools,glossary:viewGlossary,trial:viewTrial}[h]||viewHome)();
+  if(!["basics","recipes","cards","quiz","tools","glossary","trial"].includes(tab))tab="home";
+  app.innerHTML=html+`<p class="foot">Progress is saved in this browser only.</p>`;
+  document.querySelectorAll("nav.tabs a").forEach(a=>{if(a.getAttribute("href")==="#"+tab)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
+  if(h==="tools")calcTools();
+  if(h==="glossary")fillGlossary("");
+  updProg();
+}
+let lastHash=location.hash;
+window.addEventListener("hashchange",()=>{route();if(location.hash!==lastHash)window.scrollTo(0,0);lastHash=location.hash});
+app.addEventListener("click",e=>{
+  const t=e.target.closest("button,.fc");if(!t)return;
+  if(t.dataset.done){toggleDone(t.dataset.done)}
+  else if(t.dataset.fam){famFilter=t.dataset.fam;route()}
+  else if(t.dataset.deck){startDeck(t.dataset.deck);route()}
+  else if(t.id==="fc"){t.classList.toggle("flip")}
+  else if(t.dataset.fc){const c=order[ci];if(t.dataset.fc==="know"){ci++}else{missed.add(c.f);order.push(order.splice(ci,1)[0])}route()}
+  else if(t.dataset.opt!==undefined){const i=+t.dataset.opt;Q.picked=i;if(i===Q.qs[Q.i].ans)Q.score++;route()}
+  else if(t.dataset.quiz==="next"){Q.i++;Q.picked=null;route()}
+  else if(t.dataset.quiz==="new"){newQuiz();route()}
+});
+app.addEventListener("keydown",e=>{if(e.target.id==="fc"&&(e.key==="Enter"||e.key===" ")){e.preventDefault();e.target.classList.toggle("flip")}});
+app.addEventListener("input",e=>{
+  if(e.target.closest(".form")&&location.hash==="#tools")calcTools();
+  if(e.target.id==="g-search")fillGlossary(e.target.value);
+});
+app.addEventListener("change",e=>{if(e.target.dataset.trial!==undefined){S.trial[e.target.dataset.trial]=e.target.checked;save();route()}});
+route();
+</script>
