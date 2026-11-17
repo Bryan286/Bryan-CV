@@ -164,6 +164,7 @@ a.btn{text-decoration:none}
 .node.cur .dot{background:var(--blue);border-color:var(--blue);color:var(--paper);box-shadow:0 0 0 5px var(--chip)}
 .node.done:hover,.node.cur:hover{border-color:var(--blue)}
 .node.lock{opacity:.5}
+.node.todo:hover{border-color:var(--blue)}
 .node.lock .dot{font-size:15px}
 .short{background:var(--card);border:2px solid var(--hi);border-radius:12px;padding:14px 16px;display:grid;gap:10px}
 .endbox{display:grid;gap:8px;justify-items:start;padding:18px 0 0;border-top:2px dashed var(--margin)}
@@ -678,10 +679,10 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 const app=document.getElementById("app");
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const dots=n=>"●".repeat(n)+"○".repeat(3-n);
-const unlocked=i=>i===0||!!S.passed[STEPS[i-1].id];
+const unlocked=i=>true;
 const doneN=()=>STEPS.filter(s=>S.passed[s.id]).length;
 const allDone=()=>doneN()===STEPS.length;
-const basicsDone=()=>PARTS[0].ids.every(id=>S.passed[id]);
+const basicsDone=()=>true;
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function prepQ(q){const idx=shuffle(q[1].map((_,i)=>i));return {t:q[0],opts:idx.map(i=>q[1][i]),ans:idx.indexOf(q[2]),why:q[3]}}
 function sundayText(){const n=(7-new Date().getDay())%7;return n===0?"Sunday is today. You've got this!":n===1?"Sunday is tomorrow.":n+" days until Sunday."}
@@ -689,22 +690,22 @@ function goal(){return S.bigPassed
  ?`<div class="goal win"><span class="hand">You passed the Big Test</span><b>You're ready for Sunday!</b><span class="muted">${sundayText()} Keep reviewing with the flashcards if you like.</span></div>`
  :`<div class="goal"><span class="hand">Your goal</span><b>Finish every step, then pass the Big Test. If you pass it, you're ready for Sunday!</b><span class="muted">${sundayText()}</span></div>`}
 function updProg(){const d=doneN(),t=STEPS.length;document.getElementById("progtxt").textContent=d+" / "+t+" steps";document.getElementById("progbar").style.width=(100*d/t)+"%";
- document.getElementById("nav-extras").textContent=(basicsDone()?"":"🔒 ")+"Extras";document.getElementById("nav-big").textContent=(allDone()?"":"🔒 ")+"Big Test"}
+ }
 
 /* ============ PATH ============ */
 function viewPath(){
  const cur=STEPS.findIndex(s=>!S.passed[s.id]);
- let html=`<section class="view"><div class="intro"><span class="hand">Hello baker!</span><h1>Your path to Sunday</h1><p>Do one step at a time. Read the short lesson, then answer a few questions. Get them right and the next step opens.</p></div>${goal()}`;
+ let html=`<section class="view"><div class="intro"><span class="hand">Hello baker!</span><h1>Your path to Sunday</h1><p>Follow the steps in order: read the short lesson, then answer a few questions. Everything is open, so you can also jump to any step, but going in order is the easiest way to learn.</p></div>${goal()}`;
  if(cur>=0)html+=`<a class="btn primary big" href="#s-${STEPS[cur].id}">${cur===0?"Start step 1":"Continue: step "+(cur+1)+" · "+esc(STEPS[cur].title)} →</a>`;
  else html+=`<a class="btn primary big" href="#big">${S.bigPassed?"Take the Big Test again":"Take the Big Test"} →</a>`;
  html+=`<div class="path">`;
  PARTS.forEach(p=>{html+=`<h3 class="parth">${esc(p.title)}</h3>`;
   p.ids.forEach(id=>{const i=STEPS.findIndex(s=>s.id===id),st=STEPS[i],done=S.passed[id],open=unlocked(i);
-   const cls=done?"done":open?"cur":"lock";
-   const inner=`<span class="dot">${done?"✓":open?i+1:"🔒"}</span><span class="nt"><b>${esc(st.title)}</b><small>${done?"Done · tap to review":open?"Ready for you":"Finish step "+i+" first"}</small></span>`;
-   html+=open?`<a class="node ${cls}" href="#s-${id}">${inner}</a>`:`<div class="node lock" aria-disabled="true">${inner}</div>`});});
- const bigOpen=allDone();
- html+=`<h3 class="parth">Final</h3>${bigOpen?`<a class="node cur bigs" href="#big">`:`<div class="node lock bigs">`}<span class="dot">${S.bigPassed?"★":bigOpen?"★":"🔒"}</span><span class="nt"><b>The Big Test</b><small>${BIG_N} questions · ${BIG_PASS} right to pass · then you're ready for Sunday</small></span>${bigOpen?"</a>":"</div>"}</div>`;
+   const cls=done?"done":i===cur?"cur":"todo";
+   const inner=`<span class="dot">${done?"✓":i+1}</span><span class="nt"><b>${esc(st.title)}</b><small>${done?"Done · tap to review":i===cur?"Next step for you":"Not done yet"}</small></span>`;
+   html+=`<a class="node ${cls}" href="#s-${id}">${inner}</a>`});});
+ const bigOpen=true;
+ html+=`<h3 class="parth">Final</h3>${bigOpen?`<a class="node cur bigs" href="#big">`:`<div class="node lock bigs">`}<span class="dot">★</span><span class="nt"><b>The Big Test</b><small>${BIG_N} questions · ${BIG_PASS} right to pass · then you're ready for Sunday</small></span>${bigOpen?"</a>":"</div>"}</div>`;
  html+=`<div class="row" style="margin-top:20px">${resetBtn()}</div></section>`;
  return html;
 }
@@ -748,7 +749,7 @@ function viewLesson(st,i){
  if(st.kind==="t"){const all=TRIAL.every((_,k)=>S.trial[k]);
   btn=S.passed[st.id]?`<p class="good-msg">✓ Step done. The Big Test is open.</p><a class="btn primary big" href="#big">Go to the Big Test →</a>`
    :all?`<button class="btn primary big" data-finish="${st.id}">I'm ready. Finish this step →</button>`:`<button class="btn big" disabled>Tick all ${TRIAL.length} to finish this step</button>`}
- else btn=`<a class="btn primary big" href="#c-${st.id}">${S.passed[st.id]?"Answer the questions again":"I've read it. Ask me the questions"} →</a><p class="muted">${CHECKS[st.id].length} questions. Get them all right to unlock the next step.</p>`;
+ else btn=`<a class="btn primary big" href="#c-${st.id}">${S.passed[st.id]?"Answer the questions again":"I've read it. Ask me the questions"} →</a><p class="muted">${CHECKS[st.id].length} questions. Get them all right to complete this step.</p>`;
  return `<section class="view detail"><a class="back" href="#path">← My path</a><div class="stepbar"><span class="label">${esc(st.part)} · Step ${i+1} of ${STEPS.length}</span></div>${body}<div class="endbox">${btn}</div></section>`;
 }
 
@@ -760,7 +761,7 @@ function viewCheck(st,i){
   if(!C.saved){S.passed[st.id]=true;save();C.saved=true}
   const nx=STEPS[i+1];
   return `<section class="view"><div class="celebrate"><span class="hand">${C.mist===0?"Perfect, all right first time!":"Well done, you got there!"}</span><h1>Step ${i+1} done</h1>
-  <p>${nx?`Step ${i+2} is now open: <b>${esc(nx.title)}</b>.`:"Every step is done."}</p></div>${goal()}
+  <p>${nx?`Next up, step ${i+2}: <b>${esc(nx.title)}</b>.`:"That was the last step."}</p></div>${goal()}
   <div class="row">${nx?`<a class="btn primary big" href="#s-${nx.id}">Next step →</a>`:`<a class="btn primary big" href="#big">Take the Big Test →</a>`}<a class="btn" href="#path">Back to my path</a></div></section>`}
  const q=C.qs[C.queue[0]],p=C.picked,total=C.qs.length,okN=total-C.queue.length;
  return `<section class="view"><a class="back" href="#s-${st.id}">← Read the lesson again</a>
@@ -774,9 +775,9 @@ let B=null;
 function newBig(){const pool=[...Object.values(CHECKS).flat(),...QUIZ];B={qs:shuffle(pool).slice(0,BIG_N).map(prepQ),i:0,score:0,picked:null,missed:[],started:false}}
 function confetti(){const cols=["var(--red)","var(--blue)","var(--ok)","var(--hi)"];let s="";for(let k=0;k<44;k++)s+=`<i style="left:${Math.random()*100}%;background:${cols[k%4]};animation-delay:${(Math.random()*1.2).toFixed(2)}s;animation-duration:${(2.2+Math.random()*1.6).toFixed(2)}s"></i>`;return `<div class="confetti" aria-hidden="true">${s}</div>`}
 function viewBig(){
- if(!allDone())return `<section class="view"><div class="celebrate"><span class="dot lockbig">🔒</span><h1>The Big Test is locked</h1><p>Finish all ${STEPS.length} steps first. You've done ${doneN()}.</p></div>${goal()}<a class="btn primary big" href="#path">Go to my path →</a></section>`;
+ 
  if(!B)newBig();
- if(!B.started)return `<section class="view"><div class="celebrate"><span class="hand">The last step</span><h1>The Big Test</h1><p>${BIG_N} questions from everything you learned. Get <b>${BIG_PASS} or more</b> right and you're ready for Sunday. You can try as many times as you want.</p></div><button class="btn primary big" data-bstart="1">Start the Big Test →</button></section>`;
+ if(!B.started)return `<section class="view"><div class="celebrate"><span class="hand">The last step</span><h1>The Big Test</h1><p>${BIG_N} questions from everything you learned. Get <b>${BIG_PASS} or more</b> right and you're ready for Sunday. You can try as many times as you want.</p>${allDone()?"":`<p class="note">Tip: you've done ${doneN()} of ${STEPS.length} steps. The test is easier after all the steps, but you can try it now to see where you are.</p>`}</div><button class="btn primary big" data-bstart="1">Start the Big Test →</button></section>`;
  if(B.i>=B.qs.length){
   const pass=B.score>=BIG_PASS;
   if(!B.saved){B.saved=true;if(S.bigBest===null||B.score>S.bigBest)S.bigBest=B.score;if(pass)S.bigPassed=true;save();updProg()}
