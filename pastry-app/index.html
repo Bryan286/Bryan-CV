@@ -137,14 +137,45 @@ ul.clean{margin:0;padding-left:18px;display:grid;gap:6px}
 .check label{display:flex;gap:10px;align-items:flex-start;cursor:pointer}
 .check input{margin-top:5px;width:17px;height:17px;accent-color:var(--ok);flex:none}
 .foot{margin-top:40px;font-size:13px;color:var(--ink-soft)}
+
+/* guided path */
+body{font-size:16px}
+.goal{background:var(--card);border:2px dashed var(--red);border-radius:12px;padding:14px 16px;display:grid;gap:4px}
+.goal b{font-family:var(--f-display);font-size:19px;line-height:1.3}
+.goal.win{border-style:solid;border-color:var(--ok)}
+.btn.big{font-size:17px;padding:13px 20px;border-radius:10px;text-decoration:none;text-align:center;display:inline-block;max-width:460px;width:100%}
+.btn:disabled{opacity:.55;cursor:default}
+a.btn{text-decoration:none}
+.path{display:grid;gap:6px}
+.parth{margin-top:18px;color:var(--red);font-size:16px}
+.node{display:flex;gap:14px;align-items:center;padding:9px 12px;border-radius:12px;text-decoration:none;color:inherit;border:1.5px solid transparent}
+.node .dot{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font:800 17px var(--f-display);flex:none;border:2.5px solid var(--line);background:var(--card);color:var(--ink-soft)}
+.node .nt{display:grid;min-width:0}.node small{color:var(--ink-soft);font-size:13px}
+.node.done .dot{background:var(--ok);border-color:var(--ok);color:var(--paper)}
+.node.cur{background:var(--card);border-color:var(--blue)}
+.node.cur .dot{background:var(--blue);border-color:var(--blue);color:var(--paper);box-shadow:0 0 0 5px var(--chip)}
+.node.done:hover,.node.cur:hover{border-color:var(--blue)}
+.node.lock{opacity:.5}
+.node.lock .dot{font-size:15px}
+.short{background:var(--card);border:2px solid var(--hi);border-radius:12px;padding:14px 16px;display:grid;gap:10px}
+.endbox{display:grid;gap:8px;justify-items:start;padding:18px 0 0;border-top:2px dashed var(--margin)}
+.good-msg{color:var(--ok);font-weight:600}
+.celebrate{display:grid;gap:10px;max-width:62ch}
+.celebrate h1{font-size:clamp(30px,7vw,44px)}
+.celebrate.win h1{color:var(--ok)}
+.lockbig{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;background:var(--chip);font-size:24px}
+.pips{display:flex;gap:6px}.pips i{width:26px;height:6px;border-radius:3px;background:var(--line)}.pips i.on{background:var(--ok)}
+.bar.wide{width:100%;max-width:420px}
+.confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:20}
+.confetti i{position:absolute;top:-12px;width:9px;height:14px;border-radius:2px;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(105vh) rotate(540deg);opacity:.8}}
+@media (prefers-reduced-motion:reduce){.confetti{display:none}}
 </style>
 
 <header class="top"><div class="topin">
-  <a class="brand" href="#home">Fournil Notebook</a>
-  <div class="prog"><span id="progtxt">0 / 0 studied</span><div class="bar"><i id="progbar"></i></div></div>
-  <nav class="tabs" aria-label="Sections">
-    <a href="#home">Start</a><a href="#basics">Fundamentals</a><a href="#recipes">Recipes</a><a href="#cards">Flashcards</a><a href="#quiz">Quiz</a><a href="#tools">Calculators</a><a href="#glossary">Glossary</a><a href="#trial">Trial day</a>
-  </nav>
+  <a class="brand" href="#path">Fournil Notebook</a>
+  <div class="prog"><span id="progtxt">0 / 0 steps</span><div class="bar"><i id="progbar"></i></div></div>
+  <nav class="tabs" aria-label="Sections"><a href="#path">My path</a><a href="#extras" id="nav-extras">Extras</a><a href="#big" id="nav-big">Big Test</a></nav>
 </div></header>
 <main class="wrap" id="app"></main>
 
@@ -525,77 +556,240 @@ const TRIAL = [
 "At the end, thank the team, ask for feedback and what they want to see next time."
 ];
 
+/* ============ PATH DATA ============ */
+const SHORT={
+"m-steps":["Dough always rises twice: pointage (the whole dough) then apprêt (the shaped pieces).","The order: weigh, mix, first rise, divide, pre-shape, rest, shape, final rise, score, bake, cool.","Most bread dough should be 24–26 °C after mixing."],
+"m-dough":["Every product belongs to a dough family. Know the family and you know half the recipe.","Croissant = dough + butter folded in layers (tourage). Tour simple = fold in 3, tour double = fold in 4.","Choux puff from steam. Puff pastry rises from steam between butter layers, with no yeast."],
+"m-flour":["Recipes are written as a % of the flour. Flour = 100 %.","Salt is about 2 %. Fresh yeast to instant yeast = 3 : 1.","Higher T number = darker, more whole-grain flour. Panettone needs very strong flour (W 350+)."],
+"m-oven":["Bread: deck oven, 240–250 °C, with steam.","Viennoiserie: fan (ventilated) oven, 165–175 °C. Fan ovens bake about 20 °C lower.","Never proof croissants above 26–28 °C: the butter melts."],
+"m-levain":["A levain is flour + water full of wild yeast. Lievito madre is the stiff Italian one (about 45–50 % water).","A strong lievito madre triples in 3.5–4 h at 26–28 °C.","Rinfresco = feeding it. Before panettone: 2–3 feedings in a row."],
+"m-tricks":["Weigh everything, even water and eggs.","Egg wash gently, and never on the cut edges.","Clean as you go and write numbers down. Chefs notice it."]
+};
+const CHECKS={
+"m-steps":[
+ ["What is the first rise of the whole dough called?",["Pointage","Apprêt","Façonnage"],0,"Pointage = first rise of the whole mass. Apprêt comes later, after shaping."],
+ ["What is the apprêt?",["The final rise after shaping","Weighing the ingredients","Cooling after baking"],0,"Apprêt = final proof of the shaped pieces."],
+ ["Why wait before cutting hot bread (ressuage)?",["The crumb is still setting; cut hot, it's gummy","It's too heavy","To keep it warm"],0,"Steam leaves the bread while it cools and the crumb sets."]],
+"m-dough":[
+ ["Croissant dough belongs to which family?",["Laminated yeast dough (pâte levée feuilletée)","Pâte à choux","Shortcrust (pâte sablée)"],0,"Yeast dough + butter folded in layers."],
+ ["A tour simple folds the dough in…",["3","4","2"],0,"Simple = 3 (letter fold). Double = 4 (book fold)."],
+ ["What makes choux puff in the oven?",["Steam from the water in the dough","Yeast","Baking powder"],0,"No raising agent: water turns to steam."]],
+"m-flour":[
+ ["Hydration 70 % with 1000 g of flour means…",["700 g water","70 g water","1700 g water"],0,"Everything is a % of flour weight: 70 % of 1000 g = 700 g."],
+ ["10 g of fresh yeast is about how much instant yeast?",["About 3 g","10 g","30 g"],0,"Fresh : instant = 3 : 1."],
+ ["What does salt do to yeast?",["Slows it down","Feeds it","Nothing"],0,"Don't leave salt and yeast in direct contact for long."]],
+"m-oven":[
+ ["Where is bread usually baked?",["Deck oven, 240–250 °C, with steam","Fan oven at 170 °C, no steam","At 100 °C"],0,"Bread loves strong bottom heat and steam."],
+ ["Where are croissants usually baked?",["Fan (ventilated) oven, 165–175 °C","Deck oven at 250 °C with lots of steam","At 120 °C"],0,"Viennoiserie goes in the convection oven, lower temperature."],
+ ["Why do we put steam (buée) in the oven for bread?",["So the loaf can grow and gets a shiny, crispy crust","To make the crumb wet","To cook faster"],0,"Steam keeps the surface soft at the start, then gives shine."]],
+"m-levain":[
+ ["What is lievito madre?",["A stiff Italian mother dough (about 45–50 % water)","A type of flour","A pastry cream"],0,"Used for panettone and colomba."],
+ ["In 3.5–4 h at 27 °C, a strong lievito madre should…",["Triple in volume","Stay the same","Get smaller"],0,"If it doesn't triple, it's not ready for panettone."],
+ ["What does 'rinfresco' mean?",["Feeding (refreshing) the mother dough","Baking","Cooling"],0,"Rinfresco = refresh = new flour and water."]],
+"m-tricks":[
+ ["Can you put egg wash on the cut edges of croissants?",["No, it glues the layers shut","Yes, for more colour","Only on Sunday"],0,"Brush gently on top only."],
+ ["You press the proofed dough: it springs back slowly and leaves a small mark. It is…",["Ready to bake","Underproofed","Overproofed"],0,"Fast spring back = not ready. Stays dented = overproofed."],
+ ["What do chefs notice a lot on a trial day?",["Cleaning as you go","How fast you text","Your shoes' colour"],0,"A clean station shows you're serious and safe."]],
+"baguette":[
+ ["How much raw dough for one baguette?",["About 350 g (gives about 250 g baked)","About 1 kg","About 100 g"],0,"Bread loses water in the oven."],
+ ["How do you score a baguette?",["5–7 cuts, almost along the length, overlapping by a third","One big cross","No scoring"],0,"Low blade angle for a nice ear (grigne)."]],
+"ciabatta":[
+ ["Which preferment is classic for ciabatta?",["Biga","Poolish","None"],0,"Biga: stiff Italian preferment, made the day before."],
+ ["How do you handle ciabatta dough?",["Gently, with wet hands, keeping the air inside","Punch all the air out","Knead it on lots of flour for 20 min"],0,"The holes are made during the first rise; don't destroy them."]],
+"bagels":[
+ ["What happens to bagels just before baking?",["Boiled 30–60 s per side in malted water","Fried in oil","Frozen"],0,"Boiling makes the shiny chewy crust."],
+ ["Bagel dough is…",["Stiff, low hydration (about 55 %)","Very wet (80 %)","Liquid"],0,"Firm dough keeps the ring shape."]],
+"tourte-seigle":[
+ ["Do you knead rye dough a long time?",["No, rye has little gluten; just mix","Yes, 20 minutes","Only by hand"],0,"Long mixing only makes it stickier."],
+ ["When can you slice a tourte de seigle?",["After 12–24 h","Straight out of the oven","After 1 week"],0,"The crumb needs time to set."]],
+"croissant":[
+ ["Maximum proof temperature for croissants?",["26–27 °C","35 °C","15 °C"],0,"Above that, the butter melts out."],
+ ["1 double + 1 simple turn makes how many butter layers?",["12","27","6"],0,"4 × 3 = 12."],
+ ["How should butter and dough feel when laminating?",["The same firmness (butter about 10–14 °C)","Butter frozen hard, dough warm","Butter melted"],0,"Too cold: butter cracks. Too warm: it melts into the dough."]],
+"pain-choc":[
+ ["How many chocolate sticks in a pain au chocolat?",["2","1","4"],0,"One at the edge, roll once, then the second."],
+ ["Where must the closing seam be?",["Underneath","On top","On the side"],0,"Otherwise it opens in the oven."]],
+"suisse":[
+ ["What's inside a classic suisse?",["Crème pâtissière and chocolate chips","Apple compote","Almond cream"],0,"Vanilla pastry cream + chocolate chips."],
+ ["Why leave a border without cream?",["So the edges seal and nothing leaks","To save cream","For decoration"],0,"Cream on the edges = it opens and burns."]],
+"suisse-framboise":[
+ ["What is a bicolore croissant dough?",["A thin cocoa dough layer put on top before cutting","Chocolate mixed in the butter","Two different doughs side by side"],0,"Gives the dark stripes."],
+ ["Why add pectin to the raspberry compote?",["So it sets and stays in place in the oven","To make it sweeter","For colour"],0,"Liquid fruit boils out and burns."]],
+"cube":[
+ ["Why is the cube mould closed with a lid?",["It forces the dough into flat, square sides","To keep it warm","So nobody sees it"],0,"The lid shapes the cube."],
+ ["When do you fill the cube with pistachio cream?",["When it's completely cold, after baking","Before baking","While it's proofing"],0,"Warm pastry melts the cream."]],
+"chausson":[
+ ["The pastry of a chausson aux pommes is…",["Puff pastry, no yeast","Brioche","Choux"],0,"It rises from steam between the butter layers."],
+ ["Why brush syrup when they come out?",["For shine","To cool them","To make them salty"],0,"Hot pastry + syrup = glossy top."]],
+"cinnamon":[
+ ["What's the best way to cut cinnamon rolls?",["Dental floss or a very sharp knife","Scissors","Tearing by hand"],0,"No squashing of the spiral."],
+ ["What is tangzhong?",["A cooked flour-milk paste that keeps bread soft","A Chinese spice","A type of oven"],0,"It holds more water in the dough."]],
+"hot-cross":[
+ ["What is the cross made of?",["Flour and water paste","Icing sugar","Pastry strips"],0,"Piped before baking."],
+ ["When do you add the dried fruit?",["At the end, on slow speed","At the start with the flour","After baking"],0,"Early = crushed fruit and grey dough."]],
+"berliner":[
+ ["What oil temperature for Berliners?",["170–175 °C","120 °C","220 °C"],0,"Too hot = dark outside, raw inside."],
+ ["The pale ring around the middle shows…",["Good proof and good oil temperature","It's raw","Too much sugar"],0,"A well-proofed ball floats high in the oil."]],
+"flan":[
+ ["When do you cut a flan parisien?",["When fully cold, ideally the next day","Hot out of the oven","After 10 minutes"],0,"It must set in the fridge."],
+ ["Is the cream cooked before going in the oven?",["Yes, like a crème pâtissière","No, it goes in raw","It's not cooked at all"],0,"Cook it until it boils 1 min, then bake."]],
+"cheesecake":[
+ ["How do you know a Basque cheesecake is done?",["Very dark top, centre still wobbly","Firm centre","Pale golden top"],0,"It sets while cooling."],
+ ["Ingredients should be…",["At room temperature","Straight from the fridge","Warm from the microwave"],0,"Cold cream cheese makes lumps."]],
+"chou":[
+ ["When can you open the oven with choux inside?",["Only when they're well coloured","After 5 minutes","Anytime"],0,"Too early and they collapse."],
+ ["What happens if you add too many eggs?",["The choux spread flat","They puff more","Nothing"],0,"Add eggs little by little and check the texture."]],
+"panettone":[
+ ["How is panettone cooled?",["Upside down, hanging on skewers","In the fridge","Right side up in the mould"],0,"Otherwise the soft crumb collapses."],
+ ["Core temperature when it's done?",["92–94 °C","75 °C","110 °C"],0,"Check with a probe thermometer."],
+ ["Why two doughs (primo and secondo impasto)?",["First builds strength and flavour, second adds sugar, butter and fruit","To make two panettoni","Because the mixer is small"],0,"Adding everything at once would stop the fermentation."]],
+"colomba":[
+ ["What's different about colomba?",["Dove shape, candied orange only, almond glaze on top","It's fried","It has no butter"],0,"Same dough family as panettone."],
+ ["When is colomba eaten?",["Easter","Christmas","Halloween"],0,"Panettone is Christmas, colomba is Easter."]]
+};
+const PARTS=[
+ {title:"Part 1 · The basics",ids:["m-steps","m-dough","m-flour","m-oven","m-levain","m-tricks"]},
+ {title:"Part 2 · Bread",ids:["baguette","ciabatta","bagels","tourte-seigle"]},
+ {title:"Part 3 · Viennoiserie",ids:["croissant","pain-choc","suisse","suisse-framboise","cube","chausson"]},
+ {title:"Part 4 · Sweet doughs",ids:["cinnamon","hot-cross","berliner"]},
+ {title:"Part 5 · Pâtisserie",ids:["flan","cheesecake","chou"]},
+ {title:"Part 6 · Panettone & colomba",ids:["panettone","colomba"]},
+ {title:"Part 7 · Getting ready",ids:["trial"]}
+];
+const STEPS=[];
+PARTS.forEach(p=>p.ids.forEach(id=>{const m=MODULES.find(x=>x.id===id),r=RECIPES.find(x=>x.id===id);STEPS.push({id,part:p.title,kind:m?"m":r?"r":"t",item:m||r||null,title:m?m.title:r?r.name:"Trial day checklist"})}));
+const BIG_N=20,BIG_PASS=16;
+
 /* ============ STATE ============ */
-const KEY="fournil-v1";
-let S={done:{},trial:{},best:0};
+const KEY="fournil-v2";
+let S={passed:{},trial:{},bigBest:null,bigPassed:false};
 try{const raw=localStorage.getItem(KEY);if(raw)S=Object.assign(S,JSON.parse(raw))}catch(e){}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 const app=document.getElementById("app");
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const total=()=>MODULES.length+RECIPES.length;
-function doneCount(){return [...MODULES,...RECIPES].filter(x=>S.done[x.id]).length}
-function updProg(){const d=doneCount(),t=total();document.getElementById("progtxt").textContent=d+" / "+t+" studied";document.getElementById("progbar").style.width=(100*d/t)+"%"}
-function toggleDone(id){S.done[id]=!S.done[id];save();updProg();route()}
 const dots=n=>"●".repeat(n)+"○".repeat(3-n);
+const unlocked=i=>i===0||!!S.passed[STEPS[i-1].id];
+const doneN=()=>STEPS.filter(s=>S.passed[s.id]).length;
+const allDone=()=>doneN()===STEPS.length;
+const basicsDone=()=>PARTS[0].ids.every(id=>S.passed[id]);
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function prepQ(q){const idx=shuffle(q[1].map((_,i)=>i));return {t:q[0],opts:idx.map(i=>q[1][i]),ans:idx.indexOf(q[2]),why:q[3]}}
+function sundayText(){const n=(7-new Date().getDay())%7;return n===0?"Sunday is today. You've got this!":n===1?"Sunday is tomorrow.":n+" days until Sunday."}
+function goal(){return S.bigPassed
+ ?`<div class="goal win"><span class="hand">You passed the Big Test</span><b>You're ready for Sunday!</b><span class="muted">${sundayText()} Keep reviewing with the flashcards if you like.</span></div>`
+ :`<div class="goal"><span class="hand">Your goal</span><b>Finish every step, then pass the Big Test. If you pass it, you're ready for Sunday!</b><span class="muted">${sundayText()}</span></div>`}
+function updProg(){const d=doneN(),t=STEPS.length;document.getElementById("progtxt").textContent=d+" / "+t+" steps";document.getElementById("progbar").style.width=(100*d/t)+"%";
+ document.getElementById("nav-extras").textContent=(basicsDone()?"":"🔒 ")+"Extras";document.getElementById("nav-big").textContent=(allDone()?"":"🔒 ")+"Big Test"}
 
-/* ============ VIEWS ============ */
-function viewHome(){
-  const nextM=MODULES.find(m=>!S.done[m.id]);const nextR=RECIPES.find(r=>!S.done[r.id]);
-  return `<section class="view">
-  <div class="intro"><span class="hand">For the trial day at the bakery</span>
-  <h1>Recipes to learn, one page at a time</h1>
-  <p>Everything from the notebook list: the 18 recipes, the steps of fermentation, the basic doughs, lievito madre, ovens and temperatures, and the little tricks. Read a page, mark it as studied, then test yourself with the flashcards and the quiz.</p></div>
-  <div class="grid">
-    <a class="card" href="#${nextM?nextM.id:"basics"}"><span class="label">Continue learning</span><h3>${nextM?esc(nextM.title):"All fundamentals done"}</h3><p class="muted">${nextM?esc(nextM.sub):"Review them anytime."}</p></a>
-    <a class="card" href="#${nextR?"r-"+nextR.id:"recipes"}"><span class="label">Next recipe</span><h3>${nextR?esc(nextR.name):"All recipes done"}</h3><p class="muted">${nextR?esc(nextR.fam):"Try the quiz."}</p></a>
-    <a class="card" href="#quiz"><span class="label">Quiz</span><h3>Best score: ${S.best} / 10</h3><p class="muted">10 random questions with explanations.</p></a>
-  </div>
-  <div class="card"><h2>A 4-day study plan</h2>
-  <div class="tablewrap"><table><tr><th>Day</th><th>Study</th><th>Then</th></tr>
-  <tr><td><b>1</b></td><td>Steps of fermentation · Basic doughs · Flour & baker's %</td><td>Flashcards: Vocabulary</td></tr>
-  <tr><td><b>2</b></td><td>Ovens & temperatures · Croissant · Pain au chocolat · Suisses · Cube · Chausson</td><td>Quiz</td></tr>
-  <tr><td><b>3</b></td><td>Levain & lievito madre · Baguette · Ciabatta · Tourte de seigle · Bagels · Panettone · Colomba</td><td>Flashcards: Temperatures</td></tr>
-  <tr><td><b>4</b></td><td>Enriched doughs (cinnamon, hot cross, Berliner) · Chou · Flan · Cheesecake · Tricks · Trial checklist</td><td>Quiz until 8/10+</td></tr>
-  </table></div>
-  <p class="muted">Less time? Do the 3 must-knows: <a href="#m-steps">fermentation steps</a>, <a href="#r-croissant">croissant</a> and <a href="#m-oven">temperatures</a>.</p></div>
-  <div class="note tip"><span class="hand">Good to know:</span> every bakery has its own numbers. Use these as a solid base and say "how do you do it here?" on the day. Chefs like people who ask.</div>
-  </section>`;
+/* ============ PATH ============ */
+function viewPath(){
+ const cur=STEPS.findIndex(s=>!S.passed[s.id]);
+ let html=`<section class="view"><div class="intro"><span class="hand">Hello baker!</span><h1>Your path to Sunday</h1><p>Do one step at a time. Read the short lesson, then answer a few questions. Get them right and the next step opens.</p></div>${goal()}`;
+ if(cur>=0)html+=`<a class="btn primary big" href="#s-${STEPS[cur].id}">${cur===0?"Start step 1":"Continue: step "+(cur+1)+" · "+esc(STEPS[cur].title)} →</a>`;
+ else html+=`<a class="btn primary big" href="#big">${S.bigPassed?"Take the Big Test again":"Take the Big Test"} →</a>`;
+ html+=`<div class="path">`;
+ PARTS.forEach(p=>{html+=`<h3 class="parth">${esc(p.title)}</h3>`;
+  p.ids.forEach(id=>{const i=STEPS.findIndex(s=>s.id===id),st=STEPS[i],done=S.passed[id],open=unlocked(i);
+   const cls=done?"done":open?"cur":"lock";
+   const inner=`<span class="dot">${done?"✓":open?i+1:"🔒"}</span><span class="nt"><b>${esc(st.title)}</b><small>${done?"Done · tap to review":open?"Ready for you":"Finish step "+i+" first"}</small></span>`;
+   html+=open?`<a class="node ${cls}" href="#s-${id}">${inner}</a>`:`<div class="node lock" aria-disabled="true">${inner}</div>`});});
+ const bigOpen=allDone();
+ html+=`<h3 class="parth">Final</h3>${bigOpen?`<a class="node cur bigs" href="#big">`:`<div class="node lock bigs">`}<span class="dot">${S.bigPassed?"★":bigOpen?"★":"🔒"}</span><span class="nt"><b>The Big Test</b><small>${BIG_N} questions · ${BIG_PASS} right to pass · then you're ready for Sunday</small></span>${bigOpen?"</a>":"</div>"}</div>`;
+ html+=`<div class="row" style="margin-top:20px">${resetBtn()}</div></section>`;
+ return html;
 }
-function viewBasics(){
-  return `<section class="view"><div class="intro"><span class="hand">Theory first</span><h1>Fundamentals</h1><p>The "most important things to learn" from the notebook, one page each.</p></div>
-  <div class="grid">${MODULES.map(m=>`<a class="card" href="#${m.id}"><div class="cardtop"><h3>${esc(m.title)}</h3><span class="tick ${S.done[m.id]?"on":""}">✓</span></div><p class="muted">${esc(m.sub)}</p><div class="chips"><span class="chip">${m.min} min read</span></div></a>`).join("")}</div></section>`;
+let resetArm=false;
+function resetBtn(){return resetArm?`<span class="muted">This erases all progress.</span><button class="btn" data-reset="yes">Yes, start over</button><button class="btn" data-reset="no">Cancel</button>`:`<button class="btn" data-reset="ask">Start over</button>`}
+
+/* ============ LESSON ============ */
+function recipeBody(r){
+ return `<div class="intro"><div class="chips"><span class="chip v">${esc(r.fam)}</span><span class="chip diff">${dots(r.diff)}</span><span class="chip">${esc(r.time)}</span></div>
+ <h1>${esc(r.name)}</h1><p class="hand">${esc(r.fr)}</p><p>${esc(r.what)}</p></div>
+ <div class="short"><span class="label">Remember these numbers</span><div class="temps">${r.temps.map(t=>`<div class="temp"><span class="label">${esc(t[0])}</span><b>${esc(t[1])}</b></div>`).join("")}</div></div>
+ <div class="two">
+  <div class="card"><h3>Ingredients</h3><div class="tablewrap"><table>${r.ing.map(i=>`<tr><td>${esc(i[0])}</td><td class="q">${esc(i[1])}</td></tr>`).join("")}</table></div></div>
+  <div class="card"><h3>Method</h3><ol class="steps">${r.steps.map(s=>`<li><div>${esc(s)}</div></li>`).join("")}</ol></div>
+ </div>
+ <div class="two">
+  <div class="note tip"><span class="hand">Tricks</span><ul class="clean">${r.tricks.map(t=>`<li>${esc(t)}</li>`).join("")}</ul></div>
+  <div class="note"><span class="hand" style="color:var(--red)">Common mistakes</span><ul class="clean">${r.mistakes.map(t=>`<li>${esc(t)}</li>`).join("")}</ul></div>
+ </div>
+ <div class="ask"><h3>If the chef asks…</h3>${r.ask.map(a=>`<details><summary>${esc(a[0])}</summary><p>${esc(a[1])}</p></details>`).join("")}</div>`;
 }
-function viewModule(m){
-  return `<section class="view detail"><a class="back" href="#basics">← Fundamentals</a>
-  <div class="intro"><span class="label">${m.min} min read</span><h1>${esc(m.title)}</h1><p class="muted">${esc(m.sub)}</p></div>
-  <div class="prose">${m.html}</div>
-  <div class="row"><button class="btn ${S.done[m.id]?"good":"primary"}" data-done="${m.id}">${S.done[m.id]?"✓ Studied (tap to undo)":"Mark as studied"}</button>${nextLink(MODULES,m,"")}</div></section>`;
+function trialBody(){
+ const n=TRIAL.filter((_,i)=>S.trial[i]).length;
+ return `<div class="intro"><h1>Trial day checklist</h1><p>Nobody expects a beginner to know everything. They look at attitude, hygiene, listening and care. Tick each one when you've read it and you agree.</p><p class="label">${n} / ${TRIAL.length} ticked</p></div>
+ <div class="card check">${TRIAL.map((t,i)=>`<label for="tr-${i}"><input type="checkbox" id="tr-${i}" data-trial="${i}" ${S.trial[i]?"checked":""}><span>${esc(t)}</span></label>`).join("")}</div>
+ <div class="card"><h2>Useful sentences</h2><div class="tablewrap"><table><tr><th>French</th><th>English</th></tr>
+ <tr><td>Vous pouvez me montrer une fois ?</td><td>Can you show me once?</td></tr>
+ <tr><td>Combien ça pèse, un pâton ?</td><td>How much does one piece weigh?</td></tr>
+ <tr><td>Quelle température pour le four ?</td><td>What temperature for the oven?</td></tr>
+ <tr><td>Je les mets où ?</td><td>Where do I put them?</td></tr>
+ <tr><td>C'est bon comme ça ?</td><td>Is it right like this?</td></tr>
+ <tr><td>Qu'est-ce que je peux faire maintenant ?</td><td>What can I do now?</td></tr></table></div></div>`;
 }
-let famFilter="All";
-function viewRecipes(){
-  const fams=["All",...new Set(RECIPES.map(r=>r.fam))];
-  const list=RECIPES.filter(r=>famFilter==="All"||r.fam===famFilter);
-  return `<section class="view"><div class="intro"><span class="hand">The notebook list</span><h1>Recipes</h1><p>Quantities are a solid starting point for a small batch. Difficulty: ● easy, ●●● hard.</p></div>
-  <div class="filters" role="group" aria-label="Filter by family">${fams.map(f=>`<button data-fam="${esc(f)}" aria-pressed="${f===famFilter}">${esc(f)}</button>`).join("")}</div>
-  <div class="grid">${list.map(r=>`<a class="card" href="#r-${r.id}"><div class="cardtop"><h3>${esc(r.name)}</h3><span class="tick ${S.done[r.id]?"on":""}">✓</span></div><p class="muted">${esc(r.fr)}</p><div class="chips"><span class="chip v">${esc(r.fam)}</span><span class="chip diff" title="Difficulty">${dots(r.diff)}</span></div></a>`).join("")}</div></section>`;
+function viewLesson(st,i){
+ let body,btn;
+ if(st.kind==="m"){const m=st.item;body=`<div class="intro"><h1>${esc(m.title)}</h1><p class="muted">${esc(m.sub)} · ${m.min} min read</p></div>
+  <div class="short"><span class="label">In short: the 3 things to remember</span><ol class="steps">${SHORT[m.id].map(s=>`<li><div>${esc(s)}</div></li>`).join("")}</ol></div>
+  <div class="prose"><span class="label">The full lesson</span>${m.html}</div>`}
+ else if(st.kind==="r")body=recipeBody(st.item);
+ else body=trialBody();
+ if(st.kind==="t"){const all=TRIAL.every((_,k)=>S.trial[k]);
+  btn=S.passed[st.id]?`<p class="good-msg">✓ Step done. The Big Test is open.</p><a class="btn primary big" href="#big">Go to the Big Test →</a>`
+   :all?`<button class="btn primary big" data-finish="${st.id}">I'm ready. Finish this step →</button>`:`<button class="btn big" disabled>Tick all ${TRIAL.length} to finish this step</button>`}
+ else btn=`<a class="btn primary big" href="#c-${st.id}">${S.passed[st.id]?"Answer the questions again":"I've read it. Ask me the questions"} →</a><p class="muted">${CHECKS[st.id].length} questions. Get them all right to unlock the next step.</p>`;
+ return `<section class="view detail"><a class="back" href="#path">← My path</a><div class="stepbar"><span class="label">${esc(st.part)} · Step ${i+1} of ${STEPS.length}</span></div>${body}<div class="endbox">${btn}</div></section>`;
 }
-function nextLink(arr,item,prefix){const i=arr.indexOf(item);const n=arr[i+1];return n?`<a class="btn" href="#${prefix}${n.id}">Next: ${esc(n.name||n.title)} →</a>`:""}
-function viewRecipe(r){
-  return `<section class="view detail"><a class="back" href="#recipes">← All recipes</a>
-  <div class="intro"><div class="chips"><span class="chip v">${esc(r.fam)}</span><span class="chip diff">${dots(r.diff)}</span><span class="chip">${esc(r.time)}</span></div>
-  <h1>${esc(r.name)}</h1><p class="hand">${esc(r.fr)}</p><p>${esc(r.what)}</p></div>
-  <div class="temps">${r.temps.map(t=>`<div class="temp"><span class="label">${esc(t[0])}</span><b>${esc(t[1])}</b></div>`).join("")}</div>
-  <div class="two">
-    <div class="card"><h3>Ingredients</h3><div class="tablewrap"><table>${r.ing.map(i=>`<tr><td>${esc(i[0])}</td><td class="q">${esc(i[1])}</td></tr>`).join("")}</table></div></div>
-    <div class="card"><h3>Method</h3><ol class="steps">${r.steps.map(s=>`<li><div>${esc(s)}</div></li>`).join("")}</ol></div>
-  </div>
-  <div class="two">
-    <div class="note tip"><span class="hand">Tricks</span><ul class="clean">${r.tricks.map(t=>`<li>${esc(t)}</li>`).join("")}</ul></div>
-    <div class="note"><span class="hand" style="color:var(--red)">Common mistakes</span><ul class="clean">${r.mistakes.map(t=>`<li>${esc(t)}</li>`).join("")}</ul></div>
-  </div>
-  <div class="ask"><h3>If the chef asks…</h3>${r.ask.map(a=>`<details><summary>${esc(a[0])}</summary><p>${esc(a[1])}</p></details>`).join("")}</div>
-  <div class="row"><button class="btn ${S.done[r.id]?"good":"primary"}" data-done="${r.id}">${S.done[r.id]?"✓ Studied (tap to undo)":"Mark as studied"}</button>${nextLink(RECIPES,r,"r-")}</div></section>`;
+
+/* ============ STEP CHECK ============ */
+let C=null;
+function viewCheck(st,i){
+ if(!C||C.id!==st.id){const qs=CHECKS[st.id].map(prepQ);C={id:st.id,qs,queue:qs.map((_,k)=>k),picked:null,mist:0,saved:false}}
+ if(!C.queue.length){
+  if(!C.saved){S.passed[st.id]=true;save();C.saved=true}
+  const nx=STEPS[i+1];
+  return `<section class="view"><div class="celebrate"><span class="hand">${C.mist===0?"Perfect, all right first time!":"Well done, you got there!"}</span><h1>Step ${i+1} done</h1>
+  <p>${nx?`Step ${i+2} is now open: <b>${esc(nx.title)}</b>.`:"Every step is done."}</p></div>${goal()}
+  <div class="row">${nx?`<a class="btn primary big" href="#s-${nx.id}">Next step →</a>`:`<a class="btn primary big" href="#big">Take the Big Test →</a>`}<a class="btn" href="#path">Back to my path</a></div></section>`}
+ const q=C.qs[C.queue[0]],p=C.picked,total=C.qs.length,okN=total-C.queue.length;
+ return `<section class="view"><a class="back" href="#s-${st.id}">← Read the lesson again</a>
+ <div class="intro"><span class="label">Step ${i+1} · ${esc(st.title)} · ${okN} / ${total} right</span><div class="pips">${C.qs.map((_,k)=>`<i class="${C.queue.includes(k)?"":"on"}"></i>`).join("")}</div><h2 style="color:var(--ink)">${esc(q.t)}</h2></div>
+ <div class="qopts">${q.opts.map((o,k)=>`<button data-copt="${k}" ${p!==null?"disabled":""} class="${p===null?"":k===q.ans?"right":k===p?"wrong":""}">${esc(o)}</button>`).join("")}</div>
+ ${p!==null?`<div class="note ${p===q.ans?"tip":""}"><b>${p===q.ans?"Yes, correct!":"Not this time."}</b> ${esc(q.why)}${p===q.ans?"":" <i>This question will come back in a moment.</i>"}</div><button class="btn primary big" data-cnext="1">Continue →</button>`:""}</section>`;
 }
+
+/* ============ BIG TEST ============ */
+let B=null;
+function newBig(){const pool=[...Object.values(CHECKS).flat(),...QUIZ];B={qs:shuffle(pool).slice(0,BIG_N).map(prepQ),i:0,score:0,picked:null,missed:[],started:false}}
+function confetti(){const cols=["var(--red)","var(--blue)","var(--ok)","var(--hi)"];let s="";for(let k=0;k<44;k++)s+=`<i style="left:${Math.random()*100}%;background:${cols[k%4]};animation-delay:${(Math.random()*1.2).toFixed(2)}s;animation-duration:${(2.2+Math.random()*1.6).toFixed(2)}s"></i>`;return `<div class="confetti" aria-hidden="true">${s}</div>`}
+function viewBig(){
+ if(!allDone())return `<section class="view"><div class="celebrate"><span class="dot lockbig">🔒</span><h1>The Big Test is locked</h1><p>Finish all ${STEPS.length} steps first. You've done ${doneN()}.</p></div>${goal()}<a class="btn primary big" href="#path">Go to my path →</a></section>`;
+ if(!B)newBig();
+ if(!B.started)return `<section class="view"><div class="celebrate"><span class="hand">The last step</span><h1>The Big Test</h1><p>${BIG_N} questions from everything you learned. Get <b>${BIG_PASS} or more</b> right and you're ready for Sunday. You can try as many times as you want.</p></div><button class="btn primary big" data-bstart="1">Start the Big Test →</button></section>`;
+ if(B.i>=B.qs.length){
+  const pass=B.score>=BIG_PASS;
+  if(!B.saved){B.saved=true;if(S.bigBest===null||B.score>S.bigBest)S.bigBest=B.score;if(pass)S.bigPassed=true;save();updProg()}
+  if(pass)return `<section class="view">${confetti()}<div class="celebrate win"><span class="hand">${B.score} / ${BIG_N}</span><h1>You're ready for Sunday!</h1><p>You passed the Big Test. You know the steps, the doughs, the temperatures and every recipe on the list. Sleep well the night before, arrive early, ask questions and smile.</p></div>
+  ${B.missed.length?`<div class="card"><h3>To look at one last time</h3><ul class="clean">${B.missed.map(m=>`<li><b>${esc(m.t)}</b><br><span class="muted">${esc(m.why)}</span></li>`).join("")}</ul></div>`:""}
+  <div class="row"><button class="btn" data-bstart="again">Take it again</button><a class="btn" href="#extras">Flashcards & extras</a></div></section>`;
+  return `<section class="view"><div class="celebrate"><span class="hand">${B.score} / ${BIG_N}</span><h1>Almost there</h1><p>You need ${BIG_PASS} to pass. Read the answers you missed below, then try again. Each try brings you closer to being ready for Sunday.</p></div>
+  <div class="card"><h3>What you missed</h3><ul class="clean">${B.missed.map(m=>`<li><b>${esc(m.t)}</b><br><span class="muted">${esc(m.why)}</span></li>`).join("")}</ul></div>
+  <div class="row"><button class="btn primary big" data-bstart="again">Try again →</button></div></section>`}
+ const q=B.qs[B.i],p=B.picked;
+ return `<section class="view"><div class="intro"><span class="label">Big Test · question ${B.i+1} of ${BIG_N} · ${B.score} right so far · need ${BIG_PASS}</span><div class="bar wide"><i style="width:${100*B.i/BIG_N}%"></i></div><h2 style="color:var(--ink)">${esc(q.t)}</h2></div>
+ <div class="qopts">${q.opts.map((o,k)=>`<button data-bopt="${k}" ${p!==null?"disabled":""} class="${p===null?"":k===q.ans?"right":k===p?"wrong":""}">${esc(o)}</button>`).join("")}</div>
+ ${p!==null?`<div class="note ${p===q.ans?"tip":""}"><b>${p===q.ans?"Correct!":"Not quite."}</b> ${esc(q.why)}</div><button class="btn primary big" data-bnext="1">${B.i===BIG_N-1?"See my result":"Next question"} →</button>`:""}</section>`;
+}
+
+/* ============ EXTRAS ============ */
+function viewExtras(){
+ return `<section class="view"><div class="intro"><span class="hand">Unlocked</span><h1>Extras</h1><p>Use these anytime to practise more.</p></div>
+ <div class="grid"><a class="card" href="#cards"><h3>Flashcards</h3><p class="muted">Vocabulary, temperatures and recipes. Tap to flip.</p></a>
+ <a class="card" href="#tools"><h3>Calculators</h3><p class="muted">Water temperature, recipe scaler, yeast converter.</p></a>
+ <a class="card" href="#glossary"><h3>Glossary</h3><p class="muted">All the French and Italian bakery words.</p></a></div></section>`;
+}
+function viewLockedExtras(){return `<section class="view"><div class="celebrate"><span class="dot lockbig">🔒</span><h1>Extras are locked</h1><p>Finish Part 1 (the 6 basics) to unlock the flashcards, calculators and glossary.</p></div><a class="btn primary big" href="#path">Go to my path →</a></section>`}
 
 /* flashcards */
 function buildDecks(){
@@ -606,7 +800,6 @@ function buildDecks(){
 }
 const DECKS=buildDecks();
 let deck="Vocabulary",order=[],ci=0,missed=new Set();
-function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function startDeck(name){deck=name;order=shuffle(DECKS[name]);ci=0;missed=new Set()}
 startDeck(deck);
 function viewCards(){
@@ -616,19 +809,6 @@ function viewCards(){
   :`<div class="card" style="text-align:center"><h2>Deck finished</h2><p>You knew ${DECKS[deck].length-missed.size} of ${DECKS[deck].length} on the first try.</p><div class="row" style="justify-content:center"><button class="btn primary" data-deck="${esc(deck)}">Restart this deck</button></div></div>`;
   return `<section class="view"><div class="intro"><span class="hand">Repeat until it sticks</span><h1>Flashcards</h1><p>Cards you miss go back to the end of the pile.</p></div>
   <div class="filters" role="group" aria-label="Deck">${Object.keys(DECKS).map(d=>`<button data-deck="${esc(d)}" aria-pressed="${d===deck}">${esc(d)} (${DECKS[d].length})</button>`).join("")}</div>${body}</section>`;
-}
-
-/* quiz */
-let Q=null;
-function newQuiz(){Q={qs:shuffle(QUIZ).slice(0,10).map(q=>{const idx=shuffle(q[1].map((_,i)=>i));return {t:q[0],opts:idx.map(i=>q[1][i]),ans:idx.indexOf(q[2]),why:q[3]}}),i:0,score:0,picked:null}}
-function viewQuiz(){
-  if(!Q)newQuiz();
-  if(Q.i>=Q.qs.length){if(Q.score>S.best){S.best=Q.score;save()}
-    return `<section class="view"><div class="intro"><h1>${Q.score} / 10</h1><p>${Q.score>=8?"Ready for the trial. Great work.":Q.score>=5?"Good base. Review the pages of the questions you missed.":"Read the Fundamentals pages again, then retry."}</p><p class="muted">Best score: ${S.best} / 10</p></div><div class="row"><button class="btn primary" data-quiz="new">New quiz</button><a class="btn" href="#basics">Fundamentals</a></div></section>`}
-  const q=Q.qs[Q.i],p=Q.picked;
-  return `<section class="view"><div class="intro"><span class="label">Question ${Q.i+1} of 10 · score ${Q.score}</span><h2 style="color:var(--ink)">${esc(q.t)}</h2></div>
-  <div class="qopts">${q.opts.map((o,i)=>`<button data-opt="${i}" ${p!==null?"disabled":""} class="${p===null?"":i===q.ans?"right":i===p?"wrong":""}">${esc(o)}</button>`).join("")}</div>
-  ${p!==null?`<div class="note ${p===q.ans?"tip":""}"><b>${p===q.ans?"Correct.":"Not quite."}</b> ${esc(q.why)}</div><div class="row"><button class="btn primary" data-quiz="next">${Q.i===9?"See result":"Next question →"}</button></div>`:""}</section>`;
 }
 
 /* tools */
@@ -677,55 +857,41 @@ function viewGlossary(){
 }
 function fillGlossary(q){q=(q||"").toLowerCase();document.getElementById("g-tab").innerHTML=GLOSSARY.filter(g=>(g[0]+g[1]).toLowerCase().includes(q)).map(g=>`<tr><td><b>${esc(g[0])}</b></td><td>${esc(g[1])}</td></tr>`).join("")||`<tr><td class="muted">No word matches. Try fewer letters.</td></tr>`}
 
-function viewTrial(){
-  const n=TRIAL.filter((_,i)=>S.trial[i]).length;
-  return `<section class="view"><div class="intro"><span class="hand">Six hours to show who you are</span><h1>Trial day</h1><p>Nobody expects a beginner to know everything. They look at attitude, hygiene, listening and care. Tick these off as you prepare.</p><p class="label">${n} / ${TRIAL.length} ready</p></div>
-  <div class="card check">${TRIAL.map((t,i)=>`<label for="tr-${i}"><input type="checkbox" id="tr-${i}" data-trial="${i}" ${S.trial[i]?"checked":""}><span>${esc(t)}</span></label>`).join("")}</div>
-  <div class="card"><h2>Useful sentences</h2><div class="tablewrap"><table>
-  <tr><th>French</th><th>English</th></tr>
-  <tr><td>Vous pouvez me montrer une fois ?</td><td>Can you show me once?</td></tr>
-  <tr><td>Combien ça pèse, un pâton ?</td><td>How much does one piece weigh?</td></tr>
-  <tr><td>Quelle température pour le four ?</td><td>What temperature for the oven?</td></tr>
-  <tr><td>Je les mets où ?</td><td>Where do I put them?</td></tr>
-  <tr><td>C'est bon comme ça ?</td><td>Is it right like this?</td></tr>
-  <tr><td>Qu'est-ce que je peux faire maintenant ?</td><td>What can I do now?</td></tr>
-  </table></div></div></section>`;
-}
+
 
 /* ============ ROUTER ============ */
 function route(){
-  const h=(location.hash||"#home").slice(1);
-  let html,tab=h;
-  const m=MODULES.find(x=>x.id===h);
-  const r=h.startsWith("r-")&&RECIPES.find(x=>"r-"+x.id===h);
-  if(m){html=viewModule(m);tab="basics"}
-  else if(r){html=viewRecipe(r);tab="recipes"}
-  else html=({basics:viewBasics,recipes:viewRecipes,cards:viewCards,quiz:viewQuiz,tools:viewTools,glossary:viewGlossary,trial:viewTrial}[h]||viewHome)();
-  if(!["basics","recipes","cards","quiz","tools","glossary","trial"].includes(tab))tab="home";
-  app.innerHTML=html+`<p class="foot">Progress is saved in this browser only.</p>`;
-  document.querySelectorAll("nav.tabs a").forEach(a=>{if(a.getAttribute("href")==="#"+tab)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
-  if(h==="tools")calcTools();
-  if(h==="glossary")fillGlossary("");
-  updProg();
+ const h=(location.hash||"#path").slice(1);let html,tab="path";
+ if(/^[sc]-/.test(h)){const i=STEPS.findIndex(s=>s.id===h.slice(2));if(i<0||!unlocked(i)){location.replace("#path");return}
+  html=h[0]==="s"?viewLesson(STEPS[i],i):viewCheck(STEPS[i],i)}
+ else if(h==="big"){html=viewBig();tab="big"}
+ else if(["extras","cards","tools","glossary"].includes(h)){tab="extras";
+  html=!basicsDone()?viewLockedExtras():h==="extras"?viewExtras():`<div class="view" style="padding-top:20px"><a class="back" href="#extras">← Extras</a></div>`+({cards:viewCards,tools:viewTools,glossary:viewGlossary})[h]()}
+ else html=viewPath();
+ app.innerHTML=html+`<p class="foot">Progress is saved in this browser only.</p>`;
+ document.querySelectorAll("nav.tabs a").forEach(a=>{if(a.getAttribute("href")==="#"+tab)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
+ if(basicsDone()&&h==="tools")calcTools();
+ if(basicsDone()&&h==="glossary")fillGlossary("");
+ updProg();
 }
 let lastHash=location.hash;
-window.addEventListener("hashchange",()=>{route();if(location.hash!==lastHash)window.scrollTo(0,0);lastHash=location.hash});
+window.addEventListener("hashchange",()=>{resetArm=false;route();if(location.hash!==lastHash)window.scrollTo(0,0);lastHash=location.hash});
+const top0=()=>window.scrollTo(0,0);
 app.addEventListener("click",e=>{
-  const t=e.target.closest("button,.fc");if(!t)return;
-  if(t.dataset.done){toggleDone(t.dataset.done)}
-  else if(t.dataset.fam){famFilter=t.dataset.fam;route()}
-  else if(t.dataset.deck){startDeck(t.dataset.deck);route()}
-  else if(t.id==="fc"){t.classList.toggle("flip")}
-  else if(t.dataset.fc){const c=order[ci];if(t.dataset.fc==="know"){ci++}else{missed.add(c.f);order.push(order.splice(ci,1)[0])}route()}
-  else if(t.dataset.opt!==undefined){const i=+t.dataset.opt;Q.picked=i;if(i===Q.qs[Q.i].ans)Q.score++;route()}
-  else if(t.dataset.quiz==="next"){Q.i++;Q.picked=null;route()}
-  else if(t.dataset.quiz==="new"){newQuiz();route()}
+ const t=e.target.closest("button,.fc");if(!t)return;const d=t.dataset;
+ if(d.deck){startDeck(d.deck);route()}
+ else if(t.id==="fc"){t.classList.toggle("flip")}
+ else if(d.fc){const c=order[ci];if(d.fc==="know"){ci++}else{missed.add(c.f);order.push(order.splice(ci,1)[0])}route()}
+ else if(d.copt!==undefined){C.picked=+d.copt;if(C.picked!==C.qs[C.queue[0]].ans)C.mist++;route()}
+ else if(d.cnext){const k=C.queue.shift();if(C.picked!==C.qs[k].ans)C.queue.push(k);C.picked=null;route();top0()}
+ else if(d.bstart){if(d.bstart==="again")newBig();B.started=true;route();top0()}
+ else if(d.bopt!==undefined){const k=+d.bopt,q=B.qs[B.i];B.picked=k;if(k===q.ans)B.score++;else B.missed.push({t:q.t,why:q.opts[q.ans]+". "+q.why});route()}
+ else if(d.bnext){B.i++;B.picked=null;route();top0()}
+ else if(d.finish){S.passed[d.finish]=true;save();route()}
+ else if(d.reset){if(d.reset==="ask")resetArm=true;else{if(d.reset==="yes"){S={passed:{},trial:{},bigBest:null,bigPassed:false};save();C=null;B=null}resetArm=false}route()}
 });
 app.addEventListener("keydown",e=>{if(e.target.id==="fc"&&(e.key==="Enter"||e.key===" ")){e.preventDefault();e.target.classList.toggle("flip")}});
-app.addEventListener("input",e=>{
-  if(e.target.closest(".form")&&location.hash==="#tools")calcTools();
-  if(e.target.id==="g-search")fillGlossary(e.target.value);
-});
-app.addEventListener("change",e=>{if(e.target.dataset.trial!==undefined){S.trial[e.target.dataset.trial]=e.target.checked;save();route()}});
+app.addEventListener("input",e=>{if(e.target.closest(".form")&&location.hash==="#tools")calcTools();if(e.target.id==="g-search")fillGlossary(e.target.value)});
+app.addEventListener("change",e=>{if(e.target.dataset.trial!==undefined){S.trial[e.target.dataset.trial]=e.target.checked;save();const y=window.scrollY;route();window.scrollTo(0,y)}});
 route();
 </script>
