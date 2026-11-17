@@ -1,0 +1,4 @@
+# Netlify: publish the pastry learning app (static, no build step)
+[build]
+  publish = "pastry-app"
+  command = ""

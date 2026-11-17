@@ -1,3 +1,11 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Step-by-step pastry and bread course: lessons, questions and a Big Test before the trial day.">
+<meta name="theme-color" content="#fbfcfe">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23c2303a'/%3E%3Cpath d='M14 40c4-14 32-14 36 0-6 6-30 6-36 0z' fill='%23fbfcfe'/%3E%3C/svg%3E">
 <title>Fournil Notebook</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -172,6 +180,8 @@ a.btn{text-decoration:none}
 @media (prefers-reduced-motion:reduce){.confetti{display:none}}
 </style>
 
+</head>
+<body>
 <header class="top"><div class="topin">
   <a class="brand" href="#path">Fournil Notebook</a>
   <div class="prog"><span id="progtxt">0 / 0 steps</span><div class="bar"><i id="progbar"></i></div></div>
@@ -895,3 +905,5 @@ app.addEventListener("input",e=>{if(e.target.closest(".form")&&location.hash==="
 app.addEventListener("change",e=>{if(e.target.dataset.trial!==undefined){S.trial[e.target.dataset.trial]=e.target.checked;save();const y=window.scrollY;route();window.scrollTo(0,y)}});
 route();
 </script>
+</body>
+</html>
