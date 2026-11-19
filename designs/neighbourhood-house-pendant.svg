@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 820" width="900" height="820">
+  <defs>
+    <linearGradient id="silver" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="900" y2="820">
+      <stop offset="0" stop-color="#f4f6f8"/>
+      <stop offset="0.35" stop-color="#a9b0b8"/>
+      <stop offset="0.55" stop-color="#eef1f4"/>
+      <stop offset="0.8" stop-color="#8d949c"/>
+      <stop offset="1" stop-color="#d9dde2"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="3" dy="5" stdDeviation="3" flood-color="#5a6b7a" flood-opacity="0.35"/>
+    </filter>
+    <radialGradient id="bg" cx="50%" cy="40%" r="75%">
+      <stop offset="0" stop-color="#e9eef2"/>
+      <stop offset="1" stop-color="#c9d3db"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="900" height="820" fill="url(#bg)"/>
+
+  <!-- pendant, tilted like the original -->
+  <g transform="translate(60 170) rotate(10 300 300)" filter="url(#shadow)"
+     fill="none" stroke="url(#silver)" stroke-linejoin="miter" stroke-linecap="square">
+
+    <!-- house body (inverted house: floor on top) -->
+    <rect x="100" y="100" width="300" height="230" stroke-width="10"/>
+
+    <!-- tall door -->
+    <rect x="128" y="122" width="78" height="170" stroke-width="7"/>
+
+    <!-- right panel frame -->
+    <rect x="228" y="126" width="152" height="184" stroke-width="7"/>
+
+    <!-- rod through the window -->
+    <line x1="206" y1="262" x2="400" y2="262" stroke-width="5"/>
+
+    <!-- four-pane window -->
+    <rect x="268" y="232" width="62" height="60" stroke-width="7"/>
+    <line x1="299" y1="232" x2="299" y2="292" stroke-width="6"/>
+    <line x1="268" y1="262" x2="330" y2="262" stroke-width="6"/>
+
+    <!-- roof (pointing down) with chimney -->
+    <path d="M40 330 L400 330 L276.7 483.3 L276.7 568 L246 568 L246 521.5 L215 560 Z" stroke-width="10"/>
+
+    <!-- the ledge sticking out from the bottom of the house -->
+    <path d="M400 330 L760 330 L760 372 L400 372" stroke-width="9"/>
+  </g>
+
+  <!-- engraved text + signature, same tilt -->
+  <g transform="translate(60 170) rotate(10 300 300)">
+    <text x="580" y="357" text-anchor="middle"
+          font-family="Futura, 'Avenir Next', 'Century Gothic', 'DejaVu Sans', sans-serif"
+          font-size="14.5" letter-spacing="1.2" fill="#7d858e">WE WERE TOO CLOSE TO THE STARS</text>
+
+    <!-- handwritten "fvv" signature, cut wire style, hanging under the ledge end -->
+    <path d="M666 444
+             C682 426 696 396 692 382 C689 372 678 378 678 396
+             C678 418 680 444 672 470 C667 484 656 486 656 474
+             M660 420 L694 416
+             L705 446 L716 410
+             M724 418 L735 446 L748 408
+             C752 400 764 398 772 404"
+          fill="none" stroke="url(#silver)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" filter="url(#shadow)"/>
+  </g>
+
+  <!-- bail ring + chain stub at top-right corner of the house -->
+  <g fill="none" stroke="url(#silver)" filter="url(#shadow)">
+    <circle cx="497" cy="266" r="16" stroke-width="6"/>
+    <path d="M497 250 C490 170 450 80 400 0" stroke-width="5" stroke-dasharray="14 6"/>
+    <path d="M497 250 C515 160 580 70 640 0" stroke-width="5" stroke-dasharray="14 6"/>
+  </g>
+</svg>
